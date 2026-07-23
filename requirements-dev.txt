@@ -1,0 +1,7 @@
+# Dev-only dependencies (linters, formatters, debug tools)
+# Install with: pip install -r requirements-dev.txt
+-r requirements.txt
+
+black>=24.0
+ruff>=0.5
+django-debug-toolbar>=4.4,<6.0

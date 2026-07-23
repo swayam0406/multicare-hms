@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}My Appointments | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+    <h2 class="mb-1">
+        <i class="bi bi-calendar-heart text-primary me-2"></i>My Appointments
+    </h2>
+    <span class="text-muted small">
+        {{ patient.full_name }} &middot; {{ patient.patient_id }}
+    </span>
+</div>
+
+{# ---------- Summary strip ---------- #}
+<div class="row g-2 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 bg-primary-subtle shadow-sm">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-calendar-check text-primary me-3" style="font-size: 2rem;"></i>
+                    <div>
+                        <div class="small text-muted">Upcoming</div>
+                        <div class="fs-4 fw-semibold text-primary">
+                            {{ upcoming_count }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 bg-light shadow-sm">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-clock-history text-secondary me-3" style="font-size: 2rem;"></i>
+                    <div>
+                        <div class="small text-muted">Past visits</div>
+                        <div class="fs-4 fw-semibold text-secondary">
+                            {{ past_count }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ---------- Upcoming ---------- #}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white d-flex align-items-center">
+        <h6 class="mb-0 text-primary">
+            <i class="bi bi-calendar-check me-2"></i>Upcoming Appointments
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        {% if upcoming %}
+        <div class="list-group list-group-flush">
+            {% for appt in upcoming %}
+            <div class="list-group-item py-3">
+                <div class="row align-items-center g-2">
+
+                    <div class="col-md-3 text-center">
+                        <div class="fs-5 fw-semibold text-primary">
+                            {{ appt.scheduled_start|date:"D, M j" }}
+                        </div>
+                        <div class="small text-muted">
+                            {{ appt.scheduled_start|time:"g:i A" }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="fw-semibold">{{ appt.doctor.display_name }}</div>
+                        <div class="small text-muted">
+                            {{ appt.doctor.department.name }} &middot;
+                            {{ appt.doctor.specialty }}
+                        </div>
+                        <div class="small mt-1">
+                            <i class="bi bi-chat-left-text me-1 text-muted"></i>
+                            {{ appt.reason }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 text-md-end">
+                        {% if appt.status == 'SCHEDULED' %}
+                        <span class="badge bg-secondary">Scheduled</span>
+                        {% elif appt.status == 'CONFIRMED' %}
+                        <span class="badge bg-primary">Confirmed</span>
+                        {% elif appt.status == 'IN_PROGRESS' %}
+                        <span class="badge bg-info text-dark">In Progress</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted small mb-0">You have no upcoming appointments.</p>
+            <p class="text-muted small mb-0">
+                Contact hospital reception to book a consultation.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ---------- Past ---------- #}
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex align-items-center">
+        <h6 class="mb-0 text-secondary">
+            <i class="bi bi-clock-history me-2"></i>Past Appointments
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        {% if past %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Date</th>
+                        <th>Doctor</th>
+                        <th>Reason</th>
+                        <th class="pe-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for appt in past %}
+                    <tr>
+                        <td class="ps-3">
+                            <div class="fw-semibold small">
+                                {{ appt.scheduled_start|date:"M j, Y" }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ appt.scheduled_start|time:"g:i A" }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small fw-semibold">
+                                {{ appt.doctor.display_name }}
+                            </div>
+                            <div class="small text-muted">
+                                {{ appt.doctor.department.name }}
+                            </div>
+                        </td>
+                        <td class="small">{{ appt.reason|truncatechars:40 }}</td>
+                        <td class="pe-3">
+                            {% if appt.status == 'COMPLETED' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% elif appt.status == 'CANCELLED' %}
+                            <span class="badge bg-warning text-dark">Cancelled</span>
+                            {% elif appt.status == 'NO_SHOW' %}
+                            <span class="badge bg-danger">No-show</span>
+                            {% elif appt.status == 'SCHEDULED' %}
+                            <span class="badge bg-secondary">Missed</span>
+                            {% else %}
+                            <span class="badge bg-light text-dark">
+                                {{ appt.get_status_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="text-center py-4">
+            <p class="text-muted small mb-0">No past appointments.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -9,7 +9,8 @@ from django.views.generic import TemplateView
 
 class CustomLoginView(LoginView):
     """LoginView with a welcome flash message."""
-    template_name = 'accounts/login.html'
+
+    template_name = "accounts/login.html"
     redirect_authenticated_user = True
 
     def form_valid(self, form):
@@ -25,7 +26,8 @@ class CustomLoginView(LoginView):
 
 class CustomLogoutView(LogoutView):
     """LogoutView with a farewell flash message."""
-    next_page = reverse_lazy('core:home')
+
+    next_page = reverse_lazy("core:home")
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -35,4 +37,5 @@ class CustomLogoutView(LogoutView):
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     """Display the logged-in user's profile information."""
-    template_name = 'accounts/profile.html'
+
+    template_name = "accounts/profile.html"

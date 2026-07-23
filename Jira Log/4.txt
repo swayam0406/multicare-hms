@@ -1,0 +1,43 @@
+Epic: EPIC-3 Patient Lifecycle Management (Appointments)
+Sprint: Sprint 4 - Appointments
+Duration: 1 iteration
+Story Points: 21 planned / 19 completed (T-4.11 deferred)
+Velocity: 19
+
+Stories:
+  - key: HMS-22
+    summary: Manage departments
+    story_points: 2
+    status: Done
+  - key: HMS-23
+    summary: Doctor profiles with weekly availability
+    story_points: 3
+    status: Done
+  - key: HMS-24
+    summary: Book appointments with conflict detection
+    story_points: 5
+    status: Done
+  - key: HMS-25
+    summary: Filterable appointment list
+    story_points: 3
+    status: Done
+  - key: HMS-26
+    summary: Doctor's daily queue
+    story_points: 2
+    status: Done
+  - key: HMS-27
+    summary: Appointment status state machine
+    story_points: 2
+    status: Done
+  - key: HMS-28
+    summary: Patient's appointments (self-service)
+    story_points: 2
+    status: Done
+  - key: HMS-29
+    summary: Sprint 4 test coverage (models, services, views)
+    story_points: 1
+    status: Done
+  - key: HMS-30
+    summary: Extra edge-case tests
+    story_points: 1
+    status: Deferred

@@ -11,14 +11,15 @@ from .views import (
     PatientUpdateView,
 )
 
-app_name = 'patients'
+app_name = "patients"
 
 urlpatterns = [
-    path('', PatientListView.as_view(), name='list'),
-    path('register/', PatientCreateView.as_view(), name='register'),
-    path('my-record/', MyPatientRecordView.as_view(), name='my_record'),
-    path('<str:patient_id>/', PatientDetailView.as_view(), name='detail'),
-    path('<str:patient_id>/edit/', PatientUpdateView.as_view(), name='edit'),
-    path('<str:patient_id>/toggle-active/', PatientToggleActiveView.as_view(),
-         name='toggle_active'),
+    path("", PatientListView.as_view(), name="list"),
+    path("register/", PatientCreateView.as_view(), name="register"),
+    path("my-record/", MyPatientRecordView.as_view(), name="my_record"),
+    path("<str:patient_id>/", PatientDetailView.as_view(), name="detail"),
+    path("<str:patient_id>/edit/", PatientUpdateView.as_view(), name="edit"),
+    path(
+        "<str:patient_id>/toggle-active/", PatientToggleActiveView.as_view(), name="toggle_active"
+    ),
 ]

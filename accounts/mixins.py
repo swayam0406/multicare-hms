@@ -43,45 +43,54 @@ class RoleRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 # ---------- Role-specific convenience mixins ----------
 
+
 class AdminRequiredMixin(RoleRequiredMixin):
     """Only users with role=ADMIN may access."""
-    allowed_roles = ['ADMIN']
+
+    allowed_roles = ["ADMIN"]
     permission_denied_message = "Admins only. You do not have permission."
 
 
 class DoctorRequiredMixin(RoleRequiredMixin):
     """Only users with role=DOCTOR may access."""
-    allowed_roles = ['DOCTOR']
+
+    allowed_roles = ["DOCTOR"]
     permission_denied_message = "This area is restricted to doctors."
 
 
 class NurseRequiredMixin(RoleRequiredMixin):
     """Only users with role=NURSE may access."""
-    allowed_roles = ['NURSE']
+
+    allowed_roles = ["NURSE"]
     permission_denied_message = "This area is restricted to nurses."
 
 
 class ReceptionistRequiredMixin(RoleRequiredMixin):
     """Only users with role=RECEPTIONIST may access."""
-    allowed_roles = ['RECEPTIONIST']
+
+    allowed_roles = ["RECEPTIONIST"]
     permission_denied_message = "This area is restricted to receptionists."
 
 
 class PatientRequiredMixin(RoleRequiredMixin):
     """Only users with role=PATIENT may access."""
-    allowed_roles = ['PATIENT']
+
+    allowed_roles = ["PATIENT"]
     permission_denied_message = "This area is restricted to patients."
 
 
 # ---------- Common combined mixins ----------
 
+
 class StaffRequiredMixin(RoleRequiredMixin):
     """Any clinical or administrative staff (excludes patients)."""
-    allowed_roles = ['ADMIN', 'DOCTOR', 'NURSE', 'RECEPTIONIST']
+
+    allowed_roles = ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"]
     permission_denied_message = "Staff access only."
 
 
 class ClinicalRequiredMixin(RoleRequiredMixin):
     """Clinical roles only — doctors and nurses."""
-    allowed_roles = ['DOCTOR', 'NURSE']
+
+    allowed_roles = ["DOCTOR", "NURSE"]
     permission_denied_message = "Clinical staff access only."

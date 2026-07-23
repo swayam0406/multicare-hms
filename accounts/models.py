@@ -19,34 +19,34 @@ class User(AbstractUser):
     """
 
     class Role(models.TextChoices):
-        ADMIN = 'ADMIN', 'Admin'
-        DOCTOR = 'DOCTOR', 'Doctor'
-        NURSE = 'NURSE', 'Nurse'
-        RECEPTIONIST = 'RECEPTIONIST', 'Receptionist'
-        PATIENT = 'PATIENT', 'Patient'
+        ADMIN = "ADMIN", "Admin"
+        DOCTOR = "DOCTOR", "Doctor"
+        NURSE = "NURSE", "Nurse"
+        RECEPTIONIST = "RECEPTIONIST", "Receptionist"
+        PATIENT = "PATIENT", "Patient"
 
     # Override email to make it required and unique
     email = models.EmailField(
         unique=True,
-        help_text='Required. Must be a valid, unique email address.',
+        help_text="Required. Must be a valid, unique email address.",
     )
 
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
         default=Role.PATIENT,
-        help_text='Determines the user\'s access level within the HMS.',
+        help_text="Determines the user's access level within the HMS.",
     )
 
     phone_regex = RegexValidator(
-        regex=r'^\+?\d{10,15}$',
-        message='Phone number must be 10 to 15 digits, optionally starting with +.',
+        regex=r"^\+?\d{10,15}$",
+        message="Phone number must be 10 to 15 digits, optionally starting with +.",
     )
     phone = models.CharField(
         validators=[phone_regex],
         max_length=15,
         blank=True,
-        help_text='Optional. Format: +919812345678 or 9812345678.',
+        help_text="Optional. Format: +919812345678 or 9812345678.",
     )
 
     date_of_birth = models.DateField(
@@ -59,28 +59,28 @@ class User(AbstractUser):
     )
 
     profile_picture = models.ImageField(
-        upload_to='profile_pictures/%Y/%m/',
+        upload_to="profile_pictures/%Y/%m/",
         blank=True,
         null=True,
     )
 
     is_verified = models.BooleanField(
         default=False,
-        help_text='Set to True once the user has verified email or phone.',
+        help_text="Set to True once the user has verified email or phone.",
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        db_table = 'accounts_user'
-        verbose_name = 'User'
-        verbose_name_plural = 'Users'
-        ordering = ['-date_joined']
+        db_table = "accounts_user"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+        ordering = ["-date_joined"]
 
     def __str__(self):
         full_name = self.get_full_name() or self.username
-        return f'{full_name} ({self.get_role_display()})'
+        return f"{full_name} ({self.get_role_display()})"
 
     # ---------- Role helper properties ----------
 

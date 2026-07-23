@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} | Multicare HMS{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h2 class="mb-0">
+                <i class="bi bi-calendar-plus text-primary me-2"></i>{{ page_title }}
+            </h2>
+            <a href="{% url 'core:home' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Cancel
+            </a>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="post" novalidate id="appointmentForm">
+                    {% csrf_token %}
+                    {% crispy form %}
+
+                    <hr class="my-4">
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'core:home' %}" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i>{{ submit_label }}
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        const slotsUrl = "{% url 'appointments:api_slots' %}";
+        const doctorField = document.getElementById("id_doctor");
+        const dateField = document.getElementById("id_appointment_date");
+        const timeField = document.getElementById("id_appointment_time");
+
+        if (!doctorField || !dateField || !timeField) return;
+
+        // Preserve current selection across reloads (for form validation errors)
+        const preservedTime = timeField.value;
+
+        function setPlaceholder(message) {
+            timeField.innerHTML = "";
+            const opt = document.createElement("option");
+            opt.value = "";
+            opt.textContent = message;
+            opt.disabled = true;
+            opt.selected = true;
+            timeField.appendChild(opt);
+        }
+
+        async function loadSlots() {
+            const doctor = doctorField.value;
+            const date = dateField.value;
+
+            if (!doctor || !date) {
+                setPlaceholder("Select a doctor and date first");
+                return;
+            }
+
+            setPlaceholder("Loading available slots...");
+
+            try {
+                const url = `${slotsUrl}?doctor=${encodeURIComponent(doctor)}&date=${encodeURIComponent(date)}`;
+                const response = await fetch(url, {
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    setPlaceholder(data.error || "Could not load slots.");
+                    return;
+                }
+
+                if (data.slots.length === 0) {
+                    setPlaceholder("No slots available for this doctor on this date.");
+                    return;
+                }
+
+                timeField.innerHTML = "";
+                const placeholder = document.createElement("option");
+                placeholder.value = "";
+                placeholder.textContent = "-- Select a time --";
+                timeField.appendChild(placeholder);
+
+                for (const slot of data.slots) {
+                    const opt = document.createElement("option");
+                    opt.value = slot.value;
+                    opt.textContent = slot.label;
+                    if (slot.value === preservedTime) {
+                        opt.selected = true;
+                    }
+                    timeField.appendChild(opt);
+                }
+            } catch (err) {
+                setPlaceholder("Error loading slots. Please try again.");
+            }
+        }
+
+        doctorField.addEventListener("change", loadSlots);
+        dateField.addEventListener("change", loadSlots);
+
+        // Auto-load on page load if both fields have values
+        if (doctorField.value && dateField.value) {
+            loadSlots();
+        }
+    })();
+</script>
+{% endblock %}

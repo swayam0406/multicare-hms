@@ -29,41 +29,41 @@ class Patient(models.Model):
     """A hospital patient record."""
 
     class Gender(models.TextChoices):
-        MALE = 'MALE', 'Male'
-        FEMALE = 'FEMALE', 'Female'
-        OTHER = 'OTHER', 'Other'
+        MALE = "MALE", "Male"
+        FEMALE = "FEMALE", "Female"
+        OTHER = "OTHER", "Other"
 
     class BloodGroup(models.TextChoices):
-        A_POS = 'A+', 'A+'
-        A_NEG = 'A-', 'A-'
-        B_POS = 'B+', 'B+'
-        B_NEG = 'B-', 'B-'
-        O_POS = 'O+', 'O+'
-        O_NEG = 'O-', 'O-'
-        AB_POS = 'AB+', 'AB+'
-        AB_NEG = 'AB-', 'AB-'
-        UNKNOWN = 'UNK', 'Unknown'
+        A_POS = "A+", "A+"
+        A_NEG = "A-", "A-"
+        B_POS = "B+", "B+"
+        B_NEG = "B-", "B-"
+        O_POS = "O+", "O+"
+        O_NEG = "O-", "O-"
+        AB_POS = "AB+", "AB+"
+        AB_NEG = "AB-", "AB-"
+        UNKNOWN = "UNK", "Unknown"
 
     class MaritalStatus(models.TextChoices):
-        SINGLE = 'SINGLE', 'Single'
-        MARRIED = 'MARRIED', 'Married'
-        DIVORCED = 'DIVORCED', 'Divorced'
-        WIDOWED = 'WIDOWED', 'Widowed'
-        OTHER = 'OTHER', 'Other'
+        SINGLE = "SINGLE", "Single"
+        MARRIED = "MARRIED", "Married"
+        DIVORCED = "DIVORCED", "Divorced"
+        WIDOWED = "WIDOWED", "Widowed"
+        OTHER = "OTHER", "Other"
 
     patient_id = models.CharField(
         max_length=20,
         unique=True,
         editable=False,
-        help_text='Auto-generated hospital ID (e.g. MC-2026-00001).',
+        help_text="Auto-generated hospital ID (e.g. MC-2026-00001).",
     )
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='patient_profile',
-        help_text='Optional link to a User account for portal access.',
+        related_name="patient_profile",
+        help_text="Optional link to a User account for portal access.",
     )
 
     first_name = models.CharField(max_length=50)
@@ -102,27 +102,27 @@ class Patient(models.Model):
 
     allergies = models.TextField(
         blank=True,
-        help_text='Comma-separated list of known allergies.',
+        help_text="Comma-separated list of known allergies.",
     )
     chronic_conditions = models.TextField(
         blank=True,
-        help_text='e.g. diabetes, hypertension.',
+        help_text="e.g. diabetes, hypertension.",
     )
     current_medications = models.TextField(
         blank=True,
-        help_text='Currently prescribed medications.',
+        help_text="Currently prescribed medications.",
     )
 
     is_active = models.BooleanField(
         default=True,
-        help_text='Soft-delete flag. Deactivated patients are hidden from staff views.',
+        help_text="Soft-delete flag. Deactivated patients are hidden from staff views.",
     )
     registered_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='registered_patients',
+        related_name="registered_patients",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -130,18 +130,18 @@ class Patient(models.Model):
     objects = PatientManager()
 
     class Meta:
-        db_table = 'patients_patient'
-        verbose_name = 'Patient'
-        verbose_name_plural = 'Patients'
-        ordering = ['-created_at']
+        db_table = "patients_patient"
+        verbose_name = "Patient"
+        verbose_name_plural = "Patients"
+        ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=['patient_id']),
-            models.Index(fields=['phone']),
-            models.Index(fields=['last_name', 'first_name']),
+            models.Index(fields=["patient_id"]),
+            models.Index(fields=["phone"]),
+            models.Index(fields=["last_name", "first_name"]),
         ]
 
     def __str__(self):
-        return f'{self.patient_id} - {self.full_name}'
+        return f"{self.patient_id} - {self.full_name}"
 
     def save(self, *args, **kwargs):
         if not self.patient_id:
@@ -152,26 +152,22 @@ class Patient(models.Model):
     def _generate_patient_id() -> str:
         """Generate a hospital-style patient ID: MC-YYYY-00001."""
         year = date.today().year
-        prefix = f'MC-{year}-'
+        prefix = f"MC-{year}-"
 
-        last = (
-            Patient.objects
-            .filter(patient_id__startswith=prefix)
-            .aggregate(Max('patient_id'))
-        )
-        last_id = last['patient_id__max']
+        last = Patient.objects.filter(patient_id__startswith=prefix).aggregate(Max("patient_id"))
+        last_id = last["patient_id__max"]
 
         if last_id:
-            last_seq = int(last_id.split('-')[-1])
+            last_seq = int(last_id.split("-")[-1])
             new_seq = last_seq + 1
         else:
             new_seq = 1
 
-        return f'{prefix}{new_seq:05d}'
+        return f"{prefix}{new_seq:05d}"
 
     @property
     def full_name(self) -> str:
-        return f'{self.first_name} {self.last_name}'.strip()
+        return f"{self.first_name} {self.last_name}".strip()
 
     @property
     def age(self) -> int:
