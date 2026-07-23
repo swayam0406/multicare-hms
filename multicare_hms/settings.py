@@ -33,9 +33,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party
+    'crispy_forms',
+    'crispy_bootstrap5',
+
     # Local apps
     'accounts',
     'core',
+    'patients',
 ]
 
 MIDDLEWARE = [
@@ -151,3 +156,9 @@ MESSAGE_TAGS = {
     messages_constants.WARNING: 'warning',
     messages_constants.ERROR: 'danger',
 }
+
+# ==========================================
+# CRISPY FORMS
+# ==========================================
+CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
+CRISPY_TEMPLATE_PACK = 'bootstrap5'

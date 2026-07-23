@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+
+{% block title %}{{ patient.full_name }} | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        {% if not is_self_view %}
+        <div class="mb-1">
+            <a href="{% url 'patients:list' %}" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left me-1"></i>All patients
+            </a>
+        </div>
+        {% endif %}
+        <h2 class="mb-1">
+            {% if is_self_view %}
+            <i class="bi bi-heart-pulse text-primary me-2"></i>My Medical Record
+            {% else %}
+            <i class="bi bi-person-vcard text-primary me-2"></i>{{ patient.full_name }}
+            {% endif %}
+        </h2>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-secondary">{{ patient.patient_id }}</span>
+            <span class="badge bg-primary">{{ patient.get_gender_display }}</span>
+            <span class="badge bg-info text-dark">{{ patient.age }} years</span>
+            {% if patient.blood_group != 'UNK' %}
+            <span class="badge bg-danger-subtle text-danger-emphasis">
+                <i class="bi bi-droplet-fill me-1"></i>{{ patient.blood_group }}
+            </span>
+            {% endif %}
+            {% if not patient.is_active %}
+            <span class="badge bg-warning text-dark">
+                <i class="bi bi-exclamation-triangle me-1"></i>Inactive
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not is_self_view %}
+    <div class="btn-group" role="group">
+        <a href="{% url 'patients:edit' patient.patient_id %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        {% if user.is_admin %}
+        {% if patient.is_active %}
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deactivateModal">
+            <i class="bi bi-person-dash me-1"></i>Deactivate
+        </button>
+        {% else %}
+        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#reactivateModal">
+            <i class="bi bi-person-check me-1"></i>Reactivate
+        </button>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+
+        {# ---------- Column 1 ---------- #}
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-primary">
+                        <i class="bi bi-person me-2"></i>Demographics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-sm-5 text-muted">First name</dt>
+                        <dd class="col-sm-7">{{ patient.first_name }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Last name</dt>
+                        <dd class="col-sm-7">{{ patient.last_name }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Date of birth</dt>
+                        <dd class="col-sm-7">{{ patient.date_of_birth|date:"F j, Y" }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Age</dt>
+                        <dd class="col-sm-7">{{ patient.age }} years</dd>
+
+                        <dt class="col-sm-5 text-muted">Gender</dt>
+                        <dd class="col-sm-7">{{ patient.get_gender_display }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Blood group</dt>
+                        <dd class="col-sm-7">{{ patient.get_blood_group_display }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Marital status</dt>
+                        <dd class="col-sm-7">
+                            {{ patient.get_marital_status_display|default:"—" }}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-primary">
+                        <i class="bi bi-telephone me-2"></i>Contact
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0 small">
+                        <dt class="col-sm-5 text-muted">Phone</dt>
+                        <dd class="col-sm-7">
+                            <a href="tel:{{ patient.phone }}" class="text-decoration-none">
+                                {{ patient.phone }}
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Email</dt>
+                        <dd class="col-sm-7">
+                            {% if patient.email %}
+                            <a href="mailto:{{ patient.email }}" class="text-decoration-none">
+                                {{ patient.email }}
+                            </a>
+                            {% else %}—{% endif %}
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Address</dt>
+                        <dd class="col-sm-7">
+                            {{ patient.address_line|default:"—"|linebreaksbr }}
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">City</dt>
+                        <dd class="col-sm-7">{{ patient.city|default:"—" }}</dd>
+
+                        <dt class="col-sm-5 text-muted">State</dt>
+                        <dd class="col-sm-7">{{ patient.state|default:"—" }}</dd>
+
+                        <dt class="col-sm-5 text-muted">PIN code</dt>
+                        <dd class="col-sm-7">{{ patient.pincode|default:"—" }}</dd>
+                    </dl>
+                </div>
+            </div>
+
+        </div>
+
+        {# ---------- Column 2 ---------- #}
+        <div class="col-lg-6">
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-primary">
+                        <i class="bi bi-shield-plus me-2"></i>Emergency Contact
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if patient.emergency_contact_name %}
+                    <dl class="row mb-0 small">
+                        <dt class="col-sm-5 text-muted">Name</dt>
+                        <dd class="col-sm-7">{{ patient.emergency_contact_name }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Phone</dt>
+                        <dd class="col-sm-7">
+                            <a href="tel:{{ patient.emergency_contact_phone }}" class="text-decoration-none">
+                                {{ patient.emergency_contact_phone }}
+                            </a>
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Relation</dt>
+                        <dd class="col-sm-7">
+                            {{ patient.emergency_contact_relation|default:"—" }}
+                        </dd>
+                    </dl>
+                    {% else %}
+                    <p class="text-muted small mb-0">No emergency contact on file.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom">
+                    <h6 class="mb-0 text-primary">
+                        <i class="bi bi-clipboard-pulse me-2"></i>Medical Basics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">Allergies</div>
+                        <div>
+                            {% if patient.allergies %}
+                            {{ patient.allergies|linebreaksbr }}
+                            {% else %}
+                            <span class="text-muted small">None reported</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="text-muted small mb-1">Chronic conditions</div>
+                        <div>
+                            {% if patient.chronic_conditions %}
+                            {{ patient.chronic_conditions|linebreaksbr }}
+                            {% else %}
+                            <span class="text-muted small">None reported</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-muted small mb-1">Current medications</div>
+                        <div>
+                            {% if patient.current_medications %}
+                            {{ patient.current_medications|linebreaksbr }}
+                            {% else %}
+                            <span class="text-muted small">None reported</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body">
+                    <h6 class="text-muted small text-uppercase mb-3">Record Information</h6>
+                    <dl class="row mb-0 small">
+                        <dt class="col-sm-5 text-muted">Registered by</dt>
+                        <dd class="col-sm-7">
+                            {% if patient.registered_by %}
+                            {{ patient.registered_by.get_full_name|default:patient.registered_by.username }}
+                            {% else %}—{% endif %}
+                        </dd>
+
+                        <dt class="col-sm-5 text-muted">Registered on</dt>
+                        <dd class="col-sm-7">{{ patient.created_at|date:"F j, Y g:i A" }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Last updated</dt>
+                        <dd class="col-sm-7">{{ patient.updated_at|date:"F j, Y g:i A" }}</dd>
+
+                        <dt class="col-sm-5 text-muted">Portal account</dt>
+                        <dd class="col-sm-7">
+                            {% if patient.user %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle me-1"></i>Linked
+                            </span>
+                            <span class="small text-muted ms-1">
+                                ({{ patient.user.username }})
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">Not linked</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% if user.is_admin and not is_self_view %}
+
+    {# ---------- Deactivate Confirmation Modal ---------- #}
+    <div class="modal fade" id="deactivateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle text-warning me-2"></i>Deactivate Patient
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to deactivate:</p>
+                    <div class="alert alert-light border">
+                        <strong>{{ patient.full_name }}</strong><br>
+                        <span class="text-muted small">{{ patient.patient_id }}</span>
+                    </div>
+                    <p class="small text-muted mb-0">
+                        The record will be preserved (not deleted). It will be hidden
+                        from the default active-patients list but remains accessible
+                        for audit and historical purposes.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <form method="post" action="{% url 'patients:toggle_active' patient.patient_id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-person-dash me-1"></i>Yes, Deactivate
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Reactivate Confirmation Modal ---------- #}
+    <div class="modal fade" id="reactivateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-arrow-counterclockwise text-success me-2"></i>Reactivate Patient
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        Reactivate <strong>{{ patient.full_name }}</strong>
+                        ({{ patient.patient_id }})?
+                    </p>
+                    <p class="small text-muted mb-0">
+                        The patient will appear again in the active list.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <form method="post" action="{% url 'patients:toggle_active' patient.patient_id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-person-check me-1"></i>Yes, Reactivate
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+    {% endblock %}

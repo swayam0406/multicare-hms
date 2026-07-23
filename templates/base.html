@@ -32,8 +32,41 @@
             <div class="collapse navbar-collapse" id="mainNavbar">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'core:home' %}">Home</a>
+                        <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active fw-semibold{% endif %}"
+                            href="{% url 'core:home' %}">Home</a>
                     </li>
+
+                    {% if user.is_authenticated and user.role != 'PATIENT' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle {% if 'patients' in request.resolver_match.namespace %}active fw-semibold{% endif %}"
+                            href="#" id="patientsMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-people me-1"></i>Patients
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="patientsMenu">
+                            <li>
+                                <a class="dropdown-item {% if request.resolver_match.url_name == 'list' %}active{% endif %}"
+                                    href="{% url 'patients:list' %}">
+                                    <i class="bi bi-list-ul me-2"></i>All Patients
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {% if request.resolver_match.url_name == 'register' %}active{% endif %}"
+                                    href="{% url 'patients:register' %}">
+                                    <i class="bi bi-person-plus me-2"></i>Register New Patient
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item small text-muted"
+                                    href="{% url 'patients:list' %}?show=inactive">
+                                    <i class="bi bi-slash-circle me-2"></i>View Inactive Patients
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button"
@@ -56,6 +89,13 @@
                                     <i class="bi bi-person me-2"></i>Profile
                                 </a>
                             </li>
+                            {% if user.role == 'PATIENT' %}
+                            <li>
+                                <a class="dropdown-item" href="{% url 'patients:my_record' %}">
+                                    <i class="bi bi-heart-pulse me-2"></i>My Medical Record
+                                </a>
+                            </li>
+                            {% endif %}
                             {% if user.is_staff %}
                             <li>
                                 <a class="dropdown-item" href="{% url 'admin:index' %}">

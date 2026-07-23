@@ -1,0 +1,46 @@
+Epic: EPIC-3 Patient Lifecycle Management
+Sprint: Sprint 3 - Patient Management
+Duration: 1 iteration
+Story Points: 18 planned / 18 completed
+Velocity: 18
+
+Stories:
+  - key: HMS-14
+    summary: Register a new patient
+    story_points: 4
+    status: Done
+
+  - key: HMS-15
+    summary: View paginated patient list
+    story_points: 3
+    status: Done
+
+  - key: HMS-16
+    summary: Search patients by ID, name, phone, email
+    story_points: 2
+    status: Done
+
+  - key: HMS-17
+    summary: View patient detail page
+    story_points: 2
+    status: Done
+
+  - key: HMS-18
+    summary: Update patient information
+    story_points: 3
+    status: Done
+
+  - key: HMS-19
+    summary: Soft-delete patients (Admin only)
+    story_points: 2
+    status: Done
+
+  - key: HMS-20
+    summary: Patient self-service view
+    story_points: 1
+    status: Done
+
+  - key: HMS-21
+    summary: Unit tests for Patient model and views
+    story_points: 1
+    status: Done

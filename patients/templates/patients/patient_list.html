@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Patients | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-people-fill text-primary me-2"></i>Patients
+        </h2>
+        <span class="text-muted small">
+            {{ total_active }} active patient{{ total_active|pluralize }}
+            {% if search_query %}
+            &middot; <strong>{{ paginator.count }}</strong>
+            match{{ paginator.count|pluralize:"es" }}
+            for &ldquo;{{ search_query }}&rdquo;
+            {% endif %}
+        </span>
+    </div>
+    <a href="{% url 'patients:register' %}" class="btn btn-primary">
+        <i class="bi bi-person-plus me-1"></i>Register New Patient
+    </a>
+</div>
+<ul class="nav nav-pills mb-3 flex-wrap gap-1">
+    <li class="nav-item">
+        <a class="nav-link {% if show_filter == 'active' %}active{% endif %}"
+            href="?show=active{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
+            <i class="bi bi-check-circle me-1"></i>Active
+            <span class="badge bg-white text-primary ms-1">{{ total_active }}</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if show_filter == 'inactive' %}active{% endif %}"
+            href="?show=inactive{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
+            <i class="bi bi-slash-circle me-1"></i>Inactive
+            <span class="badge bg-white text-secondary ms-1">{{ total_inactive }}</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if show_filter == 'all' %}active{% endif %}"
+            href="?show=all{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">
+            <i class="bi bi-collection me-1"></i>All
+        </a>
+    </li>
+</ul>
+
+<form method="get" action="{% url 'patients:list' %}" class="mb-3">
+    <div class="input-group">
+        <span class="input-group-text bg-white">
+            <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="hidden" name="show" value="{{ show_filter }}">
+        <input type="search" name="q" value="{{ search_query }}" class="form-control"
+            placeholder="Search by patient ID, name, phone, or email…" aria-label="Search patients">
+        {% if search_query %}
+        <a href="?show={{ show_filter }}" class="btn btn-outline-secondary" title="Clear search">
+            <i class="bi bi-x-lg"></i>
+        </a>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">
+            Search
+        </button>
+    </div>
+</form>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+
+        {% if patients %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="ps-3">Patient ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Age</th>
+                        <th scope="col">Gender</th>
+                        <th scope="col">Blood</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Registered</th>
+                        <th scope="col" class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for patient in patients %}
+                    <tr {% if not patient.is_active %}class="table-warning" {% endif %}>
+                        <td class="ps-3">
+                            <span class="badge bg-secondary">{{ patient.patient_id }}</span>
+                            {% if not patient.is_active %}
+                            <span class="badge bg-warning text-dark ms-1" title="Inactive">
+                                <i class="bi bi-slash-circle"></i>
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'patients:detail' patient.patient_id %}"
+                                class="text-decoration-none fw-semibold">
+                                {{ patient.full_name }}
+                            </a>
+                            {% if patient.email %}
+                            <div class="small text-muted">{{ patient.email }}</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ patient.age }}</td>
+                        <td>{{ patient.get_gender_display }}</td>
+                        <td>
+                            {% if patient.blood_group != 'UNK' %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis">
+                                {{ patient.blood_group }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ patient.phone }}</td>
+                        <td class="text-muted small">
+                            {{ patient.created_at|date:"M j, Y" }}
+                        </td>
+                        <td class="text-end pe-3">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'patients:detail' patient.patient_id %}" class="btn btn-outline-primary"
+                                    title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'patients:edit' patient.patient_id %}" class="btn btn-outline-secondary"
+                                    title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% else %}
+        <div class="text-center py-5">
+            {% if search_query %}
+            <i class="bi bi-search text-secondary" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 text-muted">No patients match &ldquo;{{ search_query }}&rdquo;</h5>
+            <p class="text-muted">Try a different search term or clear the filter.</p>
+            <a href="{% url 'patients:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Clear Search
+            </a>
+            {% else %}
+            <i class="bi bi-person-x text-secondary" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 text-muted">No patients registered yet</h5>
+            <p class="text-muted">Get started by registering your first patient.</p>
+            <a href="{% url 'patients:register' %}" class="btn btn-primary">
+                <i class="bi bi-person-plus me-1"></i>Register New Patient
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+
+{# ---------- Pagination ---------- #}
+{% if is_paginated %}
+<nav aria-label="Patient list pagination" class="mt-4">
+    <ul class="pagination justify-content-center mb-0">
+
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <a class="page-link"
+                href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}&show={{ show_filter }}"
+                aria-label="Previous">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+        </li>
+
+        {% for num in paginator.page_range %}
+        {% if num == page_obj.number %}
+        <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+        </li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+            <a class="page-link"
+                href="?page={{ num }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                {% if page_obj.has_next %}
+                <a class="page-link"
+                    href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
+                    aria-label="Next">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+                {% else %}
+                <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+                {% endif %}
+            </li>
+
+    </ul>
+    <div class="text-center small text-muted mt-2">
+        Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        &middot; Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        of {{ paginator.count }} patients
+    </div>
+</nav>
+{% endif %}
+
+{% endblock %}
