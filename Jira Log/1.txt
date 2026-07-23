@@ -1,0 +1,74 @@
+Epic: EPIC-1 Project Foundation
+Sprint: Sprint 1 - Environment Setup
+Duration: 1 iteration
+Story Points: 8 planned / 8 completed
+Velocity: 8
+
+Stories:
+  - key: HMS-1
+    summary: Set up isolated Python virtual environment
+    story_points: 1
+    status: Done
+    tasks:
+      - Verify Python 3.12+
+      - Create venv
+      - Configure PowerShell execution policy
+      - Upgrade pip
+
+  - key: HMS-2
+    summary: Install and configure PostgreSQL with dedicated role
+    story_points: 2
+    status: Done
+    tasks:
+      - Install PostgreSQL 16
+      - Add PostgreSQL to PATH
+      - Create multicare_hms database
+      - Create hms_user role with least-privilege configuration
+      - Grant public schema privileges (PG15+ requirement)
+
+  - key: HMS-3
+    summary: Scaffold Django project and core app with pinned dependencies
+    story_points: 2
+    status: Done
+    tasks:
+      - Install Django 5.2 LTS
+      - Install psycopg2-binary and python-decouple
+      - Generate requirements.txt
+      - Create Django project
+      - Create core app
+      - Register core in INSTALLED_APPS
+
+  - key: HMS-4
+    summary: Configure settings.py for PostgreSQL via environment variables
+    story_points: 1
+    status: Done
+    tasks:
+      - Create .env and .env.example
+      - Refactor settings.py to use decouple
+      - Configure PostgreSQL DATABASES setting
+      - Set timezone to Asia/Kolkata
+      - Run initial migrations
+
+  - key: HMS-5
+    summary: Configure static/media files and base HTML template
+    story_points: 1
+    status: Done
+    tasks:
+      - Create static, staticfiles, media, templates folders
+      - Configure STATIC_URL, STATIC_ROOT, MEDIA_URL, MEDIA_ROOT
+      - Add media serving in DEBUG mode
+      - Create base.html with Bootstrap 5 + hospital theme
+      - Create HomeView and home.html
+      - Verify template inheritance
+
+  - key: HMS-6
+    summary: Initialize Git repository with clean first commit
+    story_points: 1
+    status: Done
+    tasks:
+      - Configure Git identity
+      - Create comprehensive .gitignore
+      - Create README.md
+      - git init and set main branch
+      - Verify .env excluded
+      - First commit

@@ -1,0 +1,41 @@
+Epic: EPIC-2 Authentication
+Sprint: Sprint 2 - Authentication & RBAC
+Duration: 1 iteration
+Story Points: 13 planned / 13 completed
+Velocity: 13
+
+Stories:
+  - key: HMS-7
+    summary: Custom User Model with role field
+    story_points: 3
+    status: Done
+
+  - key: HMS-8
+    summary: Role-Based Access Control mixins
+    story_points: 3
+    status: Done
+
+  - key: HMS-9
+    summary: User login with Bootstrap 5 UI
+    story_points: 2
+    status: Done
+
+  - key: HMS-10
+    summary: Secure POST-only logout with user menu
+    story_points: 1
+    status: Done
+
+  - key: HMS-11
+    summary: User profile page
+    story_points: 2
+    status: Done
+
+  - key: HMS-12
+    summary: Custom Django admin for User model
+    story_points: 1
+    status: Done
+
+  - key: HMS-13
+    summary: Reusable role-based mixins
+    story_points: 1
+    status: Done

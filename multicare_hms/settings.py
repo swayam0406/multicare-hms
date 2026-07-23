@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local apps
+    'accounts',
     'core',
 ]
 
@@ -125,3 +126,28 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # DEFAULTS
 # ==========================================
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ==========================================
+# CUSTOM USER MODEL
+# ==========================================
+AUTH_USER_MODEL = 'accounts.User'
+
+# ==========================================
+# AUTHENTICATION URLs
+# ==========================================
+LOGIN_URL = 'accounts:login'
+LOGIN_REDIRECT_URL = 'accounts:profile'
+LOGOUT_REDIRECT_URL = 'core:home'
+
+# ==========================================
+# MESSAGES FRAMEWORK - Map Django tags to Bootstrap 5 classes
+# ==========================================
+from django.contrib.messages import constants as messages_constants
+
+MESSAGE_TAGS = {
+    messages_constants.DEBUG: 'secondary',
+    messages_constants.INFO: 'info',
+    messages_constants.SUCCESS: 'success',
+    messages_constants.WARNING: 'warning',
+    messages_constants.ERROR: 'danger',
+}

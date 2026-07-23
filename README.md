@@ -67,3 +67,32 @@ python manage.py runserver
 Visit **http://127.0.0.1:8000/** to view the app.
 
 ## 🗂️ Project Structure
+multicare-hms/
+├── core/ # Shared app (base templates, home page)
+├── multicare_hms/ # Django project settings
+├── static/ # Source static files
+├── staticfiles/ # Collected static files (auto)
+├── media/ # User uploads
+├── templates/ # Project-wide templates
+├── venv/ # Virtual environment (not committed)
+├── .env # Secrets (not committed)
+├── .env.example # Env template
+├── manage.py
+├── requirements.txt
+└── README.md
+## 📅 Sprint Log
+
+| Sprint | Epic | Status |
+|--------|------|--------|
+| Sprint 1 | Project Foundation | 🟡 In Progress |
+| Sprint 2 | Authentication | ⏳ Planned |
+| Sprint 3 | Patient Management | ⏳ Planned |
+| Sprint 4 | Appointment Management | ⏳ Planned |
+| Sprint 5 | Clinical Management | ⏳ Planned |
+| Sprint 6 | Billing | ⏳ Planned |
+| Sprint 7 | Lab / Pharmacy / Inventory | ⏳ Planned |
+| Sprint 8 | Analytics & Deployment | ⏳ Planned |
+
+## 📜 License
+
+For educational and portfolio purposes.
