@@ -1,0 +1,163 @@
+# ==========================================
+# Multicare HMS - Git Ignore Rules
+# ==========================================
+
+# -------- Python --------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.manifest
+*.spec
+
+# -------- Virtual Environments --------
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# -------- Environment Variables & Secrets --------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# -------- Django --------
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static/media
+/staticfiles/
+/media/*
+!/media/.gitkeep
+
+# Migrations - KEEP them tracked (do NOT ignore)
+# We commit migrations for team consistency.
+
+# -------- IDE / Editors --------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -------- Testing / Coverage --------
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# -------- Jupyter --------
+.ipynb_checkpoints
+
+# -------- OS --------
+desktop.ini# ==========================================
+# Multicare HMS - Git Ignore Rules
+# ==========================================
+
+# -------- Python --------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+.eggs/
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.manifest
+*.spec
+
+# -------- Virtual Environments --------
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# -------- Environment Variables & Secrets --------
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# -------- Django --------
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Static/media
+/staticfiles/
+/media/*
+!/media/.gitkeep
+
+# Migrations - KEEP them tracked (do NOT ignore)
+# We commit migrations for team consistency.
+
+# -------- IDE / Editors --------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# -------- Testing / Coverage --------
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# -------- Jupyter --------
+.ipynb_checkpoints
+
+# -------- OS --------
+desktop.ini
