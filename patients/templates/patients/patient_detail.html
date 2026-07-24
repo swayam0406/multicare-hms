@@ -39,9 +39,13 @@
 
     {% if not is_self_view %}
     <div class="btn-group" role="group">
+        <a href="{% url 'patients:history' patient.patient_id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-journal-medical me-1"></i>History
+        </a>
         <a href="{% url 'patients:edit' patient.patient_id %}" class="btn btn-outline-primary">
             <i class="bi bi-pencil me-1"></i>Edit
         </a>
+
         {% if user.is_admin %}
         {% if patient.is_active %}
         <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deactivateModal">
@@ -215,6 +219,52 @@
 
             <div class="card shadow-sm border-0 bg-light">
                 <div class="card-body">
+                    {# ---------- Clinical summary (staff view only) ---------- #}
+                    {% if not is_self_view and latest_visit %}
+                    <div class="card shadow-sm border-0 mb-4 border-start border-primary border-3">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 text-primary">
+                                <i class="bi bi-journal-medical me-2"></i>Latest Clinical Visit
+                            </h6>
+                            <a href="{% url 'patients:history' patient.patient_id %}"
+                                class="btn btn-sm btn-outline-primary">
+                                Full history ({{ total_visits }})
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="small text-muted mb-2">
+                                {{ latest_visit.scheduled_start|date:"F j, Y" }} &middot;
+                                {{ latest_visit.doctor.display_name }}
+                            </div>
+
+                            {% with mr=latest_visit.medical_record %}
+                            {% if mr.chief_complaint %}
+                            <div class="mb-2">
+                                <div class="small text-muted">Chief complaint</div>
+                                <div class="small">{{ mr.chief_complaint }}</div>
+                            </div>
+                            {% endif %}
+
+                            {% if mr.primary_diagnosis %}
+                            <div class="mb-2">
+                                <div class="small text-muted">Primary diagnosis</div>
+                                <div class="small">
+                                    <span class="badge bg-secondary">{{ mr.primary_diagnosis.condition.code }}</span>
+                                    {{ mr.primary_diagnosis.condition.name }}
+                                </div>
+                            </div>
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                    {% elif not is_self_view %}
+                    <div class="card shadow-sm border-0 mb-4 bg-light">
+                        <div class="card-body text-center small text-muted py-3">
+                            <i class="bi bi-journal-x me-1"></i>
+                            No clinical visits recorded yet.
+                        </div>
+                    </div>
+                    {% endif %}
                     <h6 class="text-muted small text-uppercase mb-3">Record Information</h6>
                     <dl class="row mb-0 small">
                         <dt class="col-sm-5 text-muted">Registered by</dt>

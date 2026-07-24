@@ -138,6 +138,20 @@
             </div>
             <div class="card-body">
 
+                {# ---------- Consultation link (always available) ---------- #}
+                {% if can_start_or_complete or user.is_admin %}
+                <a href="{% url 'medical_records:consultation' appointment.pk %}"
+                    class="btn btn-outline-primary w-100 mb-3">
+                    <i class="bi bi-clipboard2-heart me-1"></i>
+                    {% if appointment.status == 'IN_PROGRESS' %}
+                    Open Consultation
+                    {% else %}
+                    View Consultation
+                    {% endif %}
+                </a>
+                <hr>
+                {% endif %}
+
                 {% if appointment.is_terminal %}
                 <p class="text-muted small mb-0">
                     This appointment is in a terminal state.

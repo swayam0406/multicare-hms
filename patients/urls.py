@@ -4,6 +4,7 @@ from django.urls import path
 
 from .views import (
     MyPatientRecordView,
+    PatientClinicalHistoryView,
     PatientCreateView,
     PatientDetailView,
     PatientListView,
@@ -19,6 +20,7 @@ urlpatterns = [
     path("my-record/", MyPatientRecordView.as_view(), name="my_record"),
     path("<str:patient_id>/", PatientDetailView.as_view(), name="detail"),
     path("<str:patient_id>/edit/", PatientUpdateView.as_view(), name="edit"),
+    path("<str:patient_id>/history/", PatientClinicalHistoryView.as_view(), name="history"),
     path(
         "<str:patient_id>/toggle-active/", PatientToggleActiveView.as_view(), name="toggle_active"
     ),

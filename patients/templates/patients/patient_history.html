@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}{{ patient.full_name }} — History | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="mb-1">
+    <a href="{% url 'patients:detail' patient.patient_id %}" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Back to patient
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-journal-medical text-primary me-2"></i>Clinical History
+        </h2>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-secondary">{{ patient.patient_id }}</span>
+            <strong>{{ patient.full_name }}</strong>
+            <span class="text-muted small">
+                ({{ patient.age }} yrs, {{ patient.get_gender_display }})
+            </span>
+        </div>
+        <div class="small text-muted mt-1">
+            {{ visit_count }} visit{{ visit_count|pluralize }} on record
+        </div>
+    </div>
+</div>
+
+{% if appointments %}
+
+<div class="timeline">
+    {% for appt in appointments %}
+    {% with mr=appt.medical_record %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <div class="fw-semibold text-primary">
+                    {{ appt.scheduled_start|date:"l, F j, Y" }}
+                    <span class="text-muted small ms-2">
+                        {{ appt.scheduled_start|time:"g:i A" }}
+                    </span>
+                </div>
+                <div class="small text-muted">
+                    {{ appt.doctor.display_name }} &middot;
+                    {{ appt.doctor.department.name }}
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+                {% if appt.status == 'COMPLETED' %}
+                <span class="badge bg-success">Completed</span>
+                {% elif appt.status == 'IN_PROGRESS' %}
+                <span class="badge bg-info text-dark">In Progress</span>
+                {% elif appt.status == 'CANCELLED' %}
+                <span class="badge bg-warning text-dark">Cancelled</span>
+                {% elif appt.status == 'NO_SHOW' %}
+                <span class="badge bg-danger">No-show</span>
+                {% else %}
+                <span class="badge bg-secondary">{{ appt.get_status_display }}</span>
+                {% endif %}
+                <a href="{% url 'medical_records:consultation' appt.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye me-1"></i>Open
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+
+            {# ---------- Chief complaint ---------- #}
+            {% if mr.chief_complaint %}
+            <div class="mb-3">
+                <div class="small text-muted text-uppercase">Chief complaint</div>
+                <div>{{ mr.chief_complaint }}</div>
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+
+                {# ---------- Diagnoses ---------- #}
+                <div class="col-md-6">
+                    <div class="small text-muted text-uppercase mb-1">
+                        <i class="bi bi-heart-pulse me-1"></i>Diagnoses
+                    </div>
+                    {% if mr.diagnoses.all %}
+                    <ul class="list-unstyled small mb-0">
+                        {% for dx in mr.diagnoses.all %}
+                        <li class="mb-1">
+                            <span class="badge bg-secondary me-1">{{ dx.condition.code }}</span>
+                            {{ dx.condition.name }}
+                            {% if dx.is_primary %}
+                            <span class="badge bg-primary ms-1">Primary</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="text-muted small">—</span>
+                    {% endif %}
+                </div>
+
+                {# ---------- Vitals summary ---------- #}
+                <div class="col-md-6">
+                    <div class="small text-muted text-uppercase mb-1">
+                        <i class="bi bi-activity me-1"></i>Vitals
+                    </div>
+                    {% if mr.vitals %}
+                    <div class="small">
+                        {% if mr.vitals.bp %}BP {{ mr.vitals.bp }} &middot;{% endif %}
+                        {% if mr.vitals.pulse %}Pulse {{ mr.vitals.pulse }} bpm &middot;{% endif %}
+                        {% if mr.vitals.temperature %}Temp {{ mr.vitals.temperature }} °C &middot;{% endif %}
+                        {% if mr.vitals.spo2 %}SpO₂ {{ mr.vitals.spo2 }}%{% endif %}
+                    </div>
+                    {% if mr.vitals.bmi %}
+                    <div class="small text-muted">
+                        BMI {{ mr.vitals.bmi }} ({{ mr.vitals.bmi_category }})
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-muted small">Not recorded</span>
+                    {% endif %}
+                </div>
+
+                {# ---------- Prescription summary ---------- #}
+                <div class="col-12">
+                    <div class="small text-muted text-uppercase mb-1">
+                        <i class="bi bi-prescription2 me-1"></i>Prescription
+                    </div>
+                    {% if mr.prescription and mr.prescription.items.all %}
+                    <ul class="list-unstyled small mb-0">
+                        {% for item in mr.prescription.items.all %}
+                        <li class="mb-1">
+                            <strong>{{ item.medication.name }} {{ item.medication.strength }}</strong>
+                            &mdash; {{ item.dose }},
+                            {{ item.get_frequency_display }},
+                            {{ item.duration_days }} day{{ item.duration_days|pluralize }}
+                            {% if item.instructions %}
+                            <span class="text-muted">({{ item.instructions }})</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <span class="text-muted small">No prescription</span>
+                    {% endif %}
+                </div>
+
+                {# ---------- Follow-up ---------- #}
+                {% if mr.follow_up_recommendation %}
+                <div class="col-12">
+                    <div class="small text-muted text-uppercase mb-1">
+                        <i class="bi bi-calendar-check me-1"></i>Follow-up
+                    </div>
+                    <div class="small">{{ mr.follow_up_recommendation }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="card shadow-sm border-0">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-journal-x text-secondary" style="font-size: 3rem;"></i>
+        <h5 class="mt-3 text-muted">No clinical history yet</h5>
+        <p class="text-muted small mb-0">
+            Medical records will appear here once consultations are completed.
+        </p>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

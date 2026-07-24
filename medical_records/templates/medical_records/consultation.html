@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block title %}Consultation | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="mb-1">
+    <a href="{% url 'appointments:detail' appointment.pk %}" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Back to appointment
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-clipboard2-heart-fill text-primary me-2"></i>Consultation
+        </h2>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-secondary">{{ appointment.patient.patient_id }}</span>
+            <strong>{{ appointment.patient.full_name }}</strong>
+            <span class="text-muted small">
+                ({{ appointment.patient.age }} yrs, {{ appointment.patient.get_gender_display }})
+            </span>
+        </div>
+        <div class="small text-muted mt-1">
+            with {{ appointment.doctor.display_name }} on
+            {{ appointment.scheduled_start|date:"M j, Y" }} at
+            {{ appointment.scheduled_start|time:"g:i A" }}
+        </div>
+    </div>
+    <div>
+        {% if appointment.status == 'IN_PROGRESS' %}
+        <span class="badge bg-info text-dark fs-6">In Progress</span>
+        {% else %}
+        <span class="badge bg-secondary fs-6">{{ appointment.get_status_display }}</span>
+        {% endif %}
+    </div>
+</div>
+
+{% if is_readonly %}
+<div class="alert alert-info d-flex align-items-center small mb-4">
+    <i class="bi bi-info-circle me-2"></i>
+    This consultation is read-only. To edit, the appointment must be
+    <strong class="mx-1">In Progress</strong>.
+</div>
+{% endif %}
+
+<form method="post" novalidate id="consultationForm">
+    {% csrf_token %}
+
+    {# ---------- Vitals ---------- #}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-activity me-2"></i>Vitals
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Systolic (mmHg)</label>
+                    {{ vitals_form.bp_systolic }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Diastolic (mmHg)</label>
+                    {{ vitals_form.bp_diastolic }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Pulse (bpm)</label>
+                    {{ vitals_form.pulse }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">SpO₂ (%)</label>
+                    {{ vitals_form.spo2 }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Resp. rate (br/min)</label>
+                    {{ vitals_form.respiratory_rate }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Temperature (°C)</label>
+                    {{ vitals_form.temperature }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Weight (kg)</label>
+                    {{ vitals_form.weight_kg }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Height (cm)</label>
+                    {{ vitals_form.height_cm }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Narrative ---------- #}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-journal-medical me-2"></i>Clinical Notes
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label small">Chief complaint</label>
+                {{ mr_form.chief_complaint }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small">History of present illness</label>
+                {{ mr_form.history_present_illness }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small">Examination findings</label>
+                {{ mr_form.examination_findings }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small">Clinical notes (patient-visible)</label>
+                {{ mr_form.clinical_notes }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small text-danger">
+                    <i class="bi bi-lock-fill me-1"></i>Private notes (not shown to patient)
+                </label>
+                {{ mr_form.private_notes }}
+            </div>
+            <div class="mb-0">
+                <label class="form-label small">Follow-up recommendation</label>
+                {{ mr_form.follow_up_recommendation }}
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Diagnoses ---------- #}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-heart-pulse me-2"></i>Diagnoses
+            </h5>
+            {% if not is_readonly %}
+            <button type="button" class="btn btn-sm btn-outline-primary" id="addDxRow">
+                <i class="bi bi-plus-lg me-1"></i>Add diagnosis
+            </button>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            {{ dx_formset.management_form }}
+            {% if dx_formset.non_form_errors %}
+            <div class="alert alert-danger">{{ dx_formset.non_form_errors }}</div>
+            {% endif %}
+
+            <div id="dxRows">
+                {% for form in dx_formset %}
+                <div class="row g-2 align-items-center dx-row mb-2 pb-2 border-bottom">
+                    {{ form.id }}
+                    <div class="col-md-5">
+                        <label class="form-label small mb-1">Condition</label>
+                        {{ form.condition }}
+                        {% if form.condition.errors %}
+                        <div class="small text-danger">{{ form.condition.errors|first }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Primary?</label>
+                        <div class="form-check pt-2">
+                            {{ form.is_primary }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Notes</label>
+                        {{ form.notes }}
+                    </div>
+                    <div class="col-md-1 text-end pt-3">
+                        {% if form.instance.pk %}
+                        <label class="small text-danger">
+                            {{ form.DELETE }} Del
+                        </label>
+                        {% else %}
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-row">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Prescription ---------- #}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0 text-primary">
+                <i class="bi bi-prescription2 me-2"></i>Prescription
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label small">Valid until</label>
+                    {{ rx_form.valid_until }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">Follow-up after (days)</label>
+                    {{ rx_form.follow_up_after_days }}
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">General instructions</label>
+                    {{ rx_form.general_instructions }}
+                </div>
+            </div>
+            <hr>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Medications</h6>
+                {% if not is_readonly %}
+                <button type="button" class="btn btn-sm btn-outline-primary" id="addRxRow">
+                    <i class="bi bi-plus-lg me-1"></i>Add medication
+                </button>
+                {% endif %}
+            </div>
+
+            {{ rx_formset.management_form }}
+            {% if rx_formset.non_form_errors %}
+            <div class="alert alert-danger">{{ rx_formset.non_form_errors }}</div>
+            {% endif %}
+
+            <div id="rxRows">
+                {% for form in rx_formset %}
+                <div class="row g-2 align-items-center rx-row mb-2 pb-2 border-bottom">
+                    {{ form.id }}
+                    {{ form.order }}
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Medication</label>
+                        {{ form.medication }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Dose</label>
+                        {{ form.dose }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Frequency</label>
+                        {{ form.frequency }}
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label small mb-1">Days</label>
+                        {{ form.duration_days }}
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small mb-1">Instructions</label>
+                        {{ form.instructions }}
+                    </div>
+                    <div class="col-md-1 text-end pt-3">
+                        {% if form.instance.pk %}
+                        <label class="small text-danger">
+                            {{ form.DELETE }} Del
+                        </label>
+                        {% else %}
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-row">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Actions ---------- #}
+    <div class="d-flex justify-content-end gap-2 mb-5">
+        <a href="{% url 'appointments:detail' appointment.pk %}" class="btn btn-outline-secondary">
+            Cancel
+        </a>
+        {% if not is_readonly %}
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>Save Consultation
+        </button>
+        {% endif %}
+    </div>
+</form>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Style all form inputs consistently */
+    #consultationForm input[type="text"],
+    #consultationForm input[type="number"],
+    #consultationForm input[type="date"],
+    #consultationForm textarea,
+    #consultationForm select {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+    }
+
+    #consultationForm input[type="checkbox"] {
+        margin-right: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        if ({% if is_readonly %}true{% else %} false{% endif %}) return;
+
+    function addFormsetRow(containerId, prefix) {
+        const container = document.getElementById(containerId);
+        const totalFormsInput = document.querySelector(`[name="${prefix}-TOTAL_FORMS"]`);
+        if (!container || !totalFormsInput) return;
+
+        const currentCount = parseInt(totalFormsInput.value, 10);
+        const lastRow = container.querySelector('.dx-row, .rx-row');
+        if (!lastRow) return;
+
+        // Clone the last row (which may be an empty extra)
+        const newRow = lastRow.cloneNode(true);
+
+        // Update all name/id attrs from prefix-N to prefix-currentCount
+        newRow.querySelectorAll('input, select, textarea').forEach(el => {
+            if (el.name) {
+                el.name = el.name.replace(
+                    new RegExp(`${prefix}-\\d+-`),
+                    `${prefix}-${currentCount}-`,
+                );
+            }
+            if (el.id) {
+                el.id = el.id.replace(
+                    new RegExp(`id_${prefix}-\\d+-`),
+                    `id_${prefix}-${currentCount}-`,
+                );
+            }
+            // Clear values on the clone
+            if (el.type === 'checkbox' || el.type === 'radio') {
+                el.checked = false;
+            } else if (el.tagName !== 'SELECT') {
+                el.value = '';
+            } else {
+                el.selectedIndex = 0;
+            }
+        });
+
+        // Clear any error messages
+        newRow.querySelectorAll('.text-danger').forEach(e => e.remove());
+
+        container.appendChild(newRow);
+        totalFormsInput.value = currentCount + 1;
+    }
+
+    // Remove an unsaved row
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.remove-row');
+        if (!btn) return;
+        const row = btn.closest('.dx-row, .rx-row');
+        if (!row) return;
+        row.remove();
+    });
+
+    const addDxBtn = document.getElementById('addDxRow');
+    if (addDxBtn) addDxBtn.addEventListener('click', () => addFormsetRow('dxRows', 'dx'));
+
+    const addRxBtn = document.getElementById('addRxRow');
+    if (addRxBtn) addRxBtn.addEventListener('click', () => addFormsetRow('rxRows', 'rx'));
+}) ();
+</script>
+{% endblock %}

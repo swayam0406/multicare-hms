@@ -109,6 +109,34 @@
                             </li>
                         </ul>
                     </li>
+                    {% if user.is_authenticated and user.role != 'PATIENT' %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="medRecMenu" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-journal-medical me-1"></i>Clinical
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="medRecMenu">
+                            <li>
+                                <a class="dropdown-item" href="/admin/medical_records/conditioncatalog/">
+                                    <i class="bi bi-list-check me-2"></i>Condition Catalog
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/admin/medical_records/medicationcatalog/">
+                                    <i class="bi bi-capsule me-2"></i>Medication Catalog
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <a class="dropdown-item small text-muted" href="/admin/medical_records/medicalrecord/">
+                                    <i class="bi bi-folder2-open me-2"></i>All Medical Records
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+
                     {% endif %}
                     {% if user.is_authenticated %}
                     <li class="nav-item dropdown">

@@ -12,6 +12,7 @@ from accounts.mixins import (
     PatientRequiredMixin,
     StaffRequiredMixin,
 )
+from appointments.models import Appointment
 
 from .forms import PatientForm
 from .models import Patient
@@ -93,6 +94,32 @@ class PatientDetailView(StaffRequiredMixin, DetailView):
     def get_queryset(self):
         return Patient.objects.select_related("registered_by", "user")
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        patient = self.object
+
+        # Latest visit with a medical record
+        latest_visit = (
+            Appointment.objects
+            .filter(patient=patient, medical_record__isnull=False)
+            .select_related(
+                "doctor__user",
+                "doctor__department",
+                "medical_record",
+            )
+            .prefetch_related("medical_record__diagnoses__condition")
+            .order_by("-scheduled_start")
+            .first()
+        )
+        ctx["latest_visit"] = latest_visit
+
+        # Total visit count
+        ctx["total_visits"] = Appointment.objects.filter(
+            patient=patient, medical_record__isnull=False
+        ).count()
+
+        return ctx
+
 
 class PatientUpdateView(StaffRequiredMixin, UpdateView):
     """Edit an existing patient. Staff only."""
@@ -162,16 +189,56 @@ class MyPatientRecordView(PatientRequiredMixin, DetailView):
 
     def get_object(self, queryset=None):
         try:
-            return Patient.objects.select_related(
-                "registered_by", "user"
-            ).get(user=self.request.user)
+            return Patient.objects.select_related("registered_by", "user").get(
+                user=self.request.user
+            )
         except Patient.DoesNotExist as err:
             raise Http404(
-                "No patient record is linked to your account. "
-                "Please contact hospital reception."
+                "No patient record is linked to your account. " "Please contact hospital reception."
             ) from err
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["is_self_view"] = True
+        return ctx
+
+
+class PatientClinicalHistoryView(StaffRequiredMixin, DetailView):
+    """
+    Staff-facing chronological history of all medical records for a patient.
+    Shows completed and in-progress visits with vitals, diagnoses, prescription.
+    """
+
+    model = Patient
+    template_name = "patients/patient_history.html"
+    context_object_name = "patient"
+    slug_field = "patient_id"
+    slug_url_kwarg = "patient_id"
+
+    def get_queryset(self):
+        return Patient.objects.select_related("user")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        patient = self.object
+
+        # All appointments with medical records, newest first
+        appointments = (
+            Appointment.objects.filter(patient=patient, medical_record__isnull=False)
+            .select_related(
+                "doctor__user",
+                "doctor__department",
+                "medical_record",
+                "medical_record__vitals",
+                "medical_record__prescription",
+            )
+            .prefetch_related(
+                "medical_record__diagnoses__condition",
+                "medical_record__prescription__items__medication",
+            )
+            .order_by("-scheduled_start")
+        )
+
+        ctx["appointments"] = appointments
+        ctx["visit_count"] = appointments.count()
         return ctx

@@ -1,0 +1,39 @@
+Epic: EPIC-4 Clinical Management
+Sprint: Sprint 5 - Clinical Management (EMR)
+Duration: 1 iteration
+Story Points: 21 planned / 17 completed (US-5.6 + T-5.11 deferred)
+Velocity: 17
+
+Stories:
+  - key: HMS-31
+    summary: Record vitals during visit
+    story_points: 3
+    status: Done
+  - key: HMS-32
+    summary: Record ICD-10-lite diagnoses
+    story_points: 3
+    status: Done
+  - key: HMS-33
+    summary: Structured prescriptions
+    story_points: 4
+    status: Done
+  - key: HMS-34
+    summary: Consultation form (single-page multi-formset)
+    story_points: 3
+    status: Done
+  - key: HMS-35
+    summary: Staff-facing clinical history
+    story_points: 2
+    status: Done
+  - key: HMS-36
+    summary: Patient self-service EMR
+    story_points: 2
+    status: Deferred
+  - key: HMS-37
+    summary: Condition + Medication catalogs with seed command
+    story_points: 2
+    status: Done
+  - key: HMS-38
+    summary: Clinical models test coverage
+    story_points: 2
+    status: Done
