@@ -12,6 +12,7 @@ urlpatterns = [
     path("doctors/", include("doctors.urls", namespace="doctors")),
     path("appointments/", include("appointments.urls", namespace="appointments")),
     path("medical-records/", include("medical_records.urls", namespace="medical_records")),
+    path("billing/", include("billing.urls", namespace="billing")),
     path("", include("core.urls", namespace="core")),
 ]
 

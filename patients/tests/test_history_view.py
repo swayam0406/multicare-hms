@@ -26,42 +26,55 @@ class PatientHistoryViewTests(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="ph", email="ph@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="ph",
+            email="ph@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="PH-1", specialty="x",
-            qualifications="MBBS", consultation_fee=100,
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="PH-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=100,
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="phs", email="phs@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="phs",
+            email="phs@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.patient = Patient.objects.create(
-            first_name="P", last_name="One",
+            first_name="P",
+            last_name="One",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543210",
+            gender=Patient.Gender.MALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
         cls.other_patient = Patient.objects.create(
-            first_name="Q", last_name="Two",
+            first_name="Q",
+            last_name="Two",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.FEMALE, phone="9876543211",
+            gender=Patient.Gender.FEMALE,
+            phone="9876543211",
             registered_by=cls.staff,
         )
 
         monday = _next_weekday(0)
         cls.appt = Appointment.objects.create(
-            patient=cls.patient, doctor=cls.doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(monday, time(10, 0))
-            ),
-            reason="Test", booked_by=cls.staff,
+            patient=cls.patient,
+            doctor=cls.doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(monday, time(10, 0))),
+            reason="Test",
+            booked_by=cls.staff,
         )
         cls.mr = MedicalRecord.objects.create(
             appointment=cls.appt,
@@ -69,14 +82,14 @@ class PatientHistoryViewTests(TestCase):
         )
         cls.cold = ConditionCatalog.objects.create(code="J00", name="Common cold")
         Diagnosis.objects.create(
-            medical_record=cls.mr, condition=cls.cold, is_primary=True,
+            medical_record=cls.mr,
+            condition=cls.cold,
+            is_primary=True,
         )
 
     def _url(self, patient=None):
         p = patient or self.patient
-        return reverse(
-            "patients:history", kwargs={"patient_id": p.patient_id}
-        )
+        return reverse("patients:history", kwargs={"patient_id": p.patient_id})
 
     def test_anonymous_redirected(self):
         response = self.client.get(self._url())
@@ -91,8 +104,10 @@ class PatientHistoryViewTests(TestCase):
 
     def test_patient_forbidden(self):
         pat = User.objects.create_user(
-            username="phpat", email="phpat@t.local",
-            password="pass1234", role=User.Role.PATIENT,
+            username="phpat",
+            email="phpat@t.local",
+            password="pass1234",
+            role=User.Role.PATIENT,
         )
         self.client.login(username="phpat", password="pass1234")
         response = self.client.get(self._url())
@@ -115,15 +130,17 @@ class PatientHistoryViewTests(TestCase):
         """An appointment with no medical record isn't shown."""
         tuesday = _next_weekday(1)
         DoctorAvailability.objects.create(
-            doctor=self.doctor, weekday=1,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=self.doctor,
+            weekday=1,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         Appointment.objects.create(
-            patient=self.patient, doctor=self.doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(tuesday, time(10, 0))
-            ),
-            reason="No record yet", booked_by=self.staff,
+            patient=self.patient,
+            doctor=self.doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(tuesday, time(10, 0))),
+            reason="No record yet",
+            booked_by=self.staff,
         )
         self.client.login(username="phs", password="pass1234")
         response = self.client.get(self._url())

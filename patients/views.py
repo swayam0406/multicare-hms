@@ -1,10 +1,12 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 
 from accounts.mixins import (
@@ -13,6 +15,7 @@ from accounts.mixins import (
     StaffRequiredMixin,
 )
 from appointments.models import Appointment
+from billing.models import Bill
 
 from .forms import PatientForm
 from .models import Patient
@@ -100,8 +103,7 @@ class PatientDetailView(StaffRequiredMixin, DetailView):
 
         # Latest visit with a medical record
         latest_visit = (
-            Appointment.objects
-            .filter(patient=patient, medical_record__isnull=False)
+            Appointment.objects.filter(patient=patient, medical_record__isnull=False)
             .select_related(
                 "doctor__user",
                 "doctor__department",
@@ -112,11 +114,25 @@ class PatientDetailView(StaffRequiredMixin, DetailView):
             .first()
         )
         ctx["latest_visit"] = latest_visit
-
-        # Total visit count
         ctx["total_visits"] = Appointment.objects.filter(
             patient=patient, medical_record__isnull=False
         ).count()
+
+        # Bills summary (latest 3 + outstanding balance)
+        recent_bills = list(
+            Bill.objects.filter(patient=patient)
+            .exclude(status="CANCELLED")
+            .select_related("appointment__doctor__user")
+            .order_by("-created_at")[:3]
+        )
+        total_outstanding = Decimal("0.00")
+        for bill in Bill.objects.filter(patient=patient).exclude(status="CANCELLED"):
+            total_outstanding += bill.balance
+        ctx["recent_bills"] = recent_bills
+        ctx["total_outstanding"] = total_outstanding
+        ctx["total_bills"] = (
+            Bill.objects.filter(patient=patient).exclude(status="CANCELLED").count()
+        )
 
         return ctx
 
@@ -241,4 +257,50 @@ class PatientClinicalHistoryView(StaffRequiredMixin, DetailView):
 
         ctx["appointments"] = appointments
         ctx["visit_count"] = appointments.count()
+        return ctx
+
+
+class MyBillsView(PatientRequiredMixin, TemplateView):
+    """Self-service view — patients see their own bills and outstanding balance."""
+
+    template_name = "patients/my_bills.html"
+
+    def get_context_data(self, **kwargs):
+        user = self.request.user
+        if not hasattr(user, "patient_profile"):
+            raise Http404(
+                "No patient record is linked to your account. " "Please contact hospital reception."
+            )
+
+        ctx = super().get_context_data(**kwargs)
+        patient = user.patient_profile
+
+        bills = (
+            Bill.objects.filter(patient=patient)
+            .select_related("appointment__doctor__user", "appointment__doctor__department")
+            .order_by("-created_at")
+        )
+
+        # Aggregate stats — cannot use .aggregate() on paid_amount (property)
+        # so iterate.
+        total_billed = Decimal("0.00")
+        total_paid = Decimal("0.00")
+        total_outstanding = Decimal("0.00")
+        for bill in bills:
+            if bill.status == "CANCELLED":
+                continue
+            total_billed += bill.total
+            total_paid += bill.paid_amount
+            total_outstanding += bill.balance
+
+        ctx.update(
+            {
+                "patient": patient,
+                "bills": bills,
+                "bill_count": bills.count(),
+                "total_billed": total_billed,
+                "total_paid": total_paid,
+                "total_outstanding": total_outstanding,
+            }
+        )
         return ctx

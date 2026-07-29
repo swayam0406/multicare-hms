@@ -1,0 +1,43 @@
+Epic: EPIC-5 Financial Management
+Sprint: Sprint 6 - Billing & Payments
+Duration: 1 iteration
+Story Points: 21 planned / 21 completed
+Velocity: 21
+
+Stories:
+  - key: HMS-39
+    summary: Auto-create bill on appointment completion
+    story_points: 3
+    status: Done
+  - key: HMS-40
+    summary: Bill line items with unit price and quantity
+    story_points: 3
+    status: Done
+  - key: HMS-41
+    summary: Partial payments with multiple methods
+    story_points: 4
+    status: Done
+  - key: HMS-42
+    summary: Insurance claims workflow
+    story_points: 2
+    status: Done
+  - key: HMS-43
+    summary: Refunds with audit trail
+    story_points: 1
+    status: Done
+  - key: HMS-44
+    summary: Bill detail with running balance
+    story_points: 2
+    status: Done
+  - key: HMS-45
+    summary: Filterable bill list
+    story_points: 2
+    status: Done
+  - key: HMS-46
+    summary: Patient self-service bills
+    story_points: 2
+    status: Done
+  - key: HMS-47
+    summary: Financial logic test coverage
+    story_points: 2
+    status: Done

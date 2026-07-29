@@ -243,6 +243,7 @@ class AppointmentDetailView(StaffRequiredMixin, DetailView):
         )
         ctx["can_start_or_complete"] = user.is_admin or is_own_appointment
         ctx["available_transitions"] = appt.available_transitions()
+        ctx["has_bill"] = hasattr(appt, "bill")
         return ctx
 
 

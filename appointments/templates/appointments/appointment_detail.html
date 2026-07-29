@@ -36,7 +36,6 @@
 
 <div class="row g-4">
 
-    {# ---------- Column 1: Details ---------- #}
     <div class="col-lg-8">
 
         <div class="card shadow-sm border-0 mb-4">
@@ -55,8 +54,7 @@
                         </a>
                         <span class="text-muted">({{ appointment.patient.patient_id }})</span>
                         <div class="small text-muted">
-                            {{ appointment.patient.age }} yrs &middot;
-                            {{ appointment.patient.get_gender_display }}
+                            {{ appointment.patient.age }} yrs &middot; {{ appointment.patient.get_gender_display }}
                         </div>
                     </dd>
 
@@ -64,8 +62,7 @@
                     <dd class="col-sm-8">
                         {{ appointment.doctor.display_name }}
                         <div class="small text-muted">
-                            {{ appointment.doctor.department.name }} &middot;
-                            {{ appointment.doctor.specialty }}
+                            {{ appointment.doctor.department.name }} &middot; {{ appointment.doctor.specialty }}
                         </div>
                     </dd>
 
@@ -73,8 +70,8 @@
                     <dd class="col-sm-8">
                         {{ appointment.scheduled_start|date:"l, F j, Y" }}
                         <div class="small text-muted">
-                            {{ appointment.scheduled_start|time:"g:i A" }} –
-                            {{ appointment.scheduled_end|time:"g:i A" }}
+                            {{ appointment.scheduled_start|time:"g:i A" }} – {{ appointment.scheduled_end|time:"g:i A"
+                            }}
                         </div>
                     </dd>
 
@@ -83,9 +80,7 @@
 
                     {% if appointment.cancelled_reason %}
                     <dt class="col-sm-4 text-muted">Cancellation reason</dt>
-                    <dd class="col-sm-8 text-warning-emphasis">
-                        {{ appointment.cancelled_reason }}
-                    </dd>
+                    <dd class="col-sm-8 text-warning-emphasis">{{ appointment.cancelled_reason }}</dd>
                     {% endif %}
                 </dl>
             </div>
@@ -93,9 +88,7 @@
 
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white">
-                <h6 class="mb-0 text-primary">
-                    <i class="bi bi-journal-text me-2"></i>Notes
-                </h6>
+                <h6 class="mb-0 text-primary"><i class="bi bi-journal-text me-2"></i>Notes</h6>
             </div>
             <div class="card-body">
                 {% if appointment.notes %}
@@ -117,10 +110,8 @@
                         {{ appointment.booked_by.get_full_name|default:appointment.booked_by.username }}
                         {% else %}—{% endif %}
                     </dd>
-
                     <dt class="col-sm-4 text-muted">Created</dt>
                     <dd class="col-sm-8">{{ appointment.created_at|date:"F j, Y g:i A" }}</dd>
-
                     <dt class="col-sm-4 text-muted">Last updated</dt>
                     <dd class="col-sm-8">{{ appointment.updated_at|date:"F j, Y g:i A" }}</dd>
                 </dl>
@@ -128,38 +119,38 @@
         </div>
     </div>
 
-    {# ---------- Column 2: Actions ---------- #}
     <div class="col-lg-4">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white">
-                <h6 class="mb-0 text-primary">
-                    <i class="bi bi-lightning me-2"></i>Actions
-                </h6>
+                <h6 class="mb-0 text-primary"><i class="bi bi-lightning me-2"></i>Actions</h6>
             </div>
             <div class="card-body">
 
-                {# ---------- Consultation link (always available) ---------- #}
                 {% if can_start_or_complete or user.is_admin %}
                 <a href="{% url 'medical_records:consultation' appointment.pk %}"
-                    class="btn btn-outline-primary w-100 mb-3">
+                    class="btn btn-outline-primary w-100 mb-2">
                     <i class="bi bi-clipboard2-heart me-1"></i>
-                    {% if appointment.status == 'IN_PROGRESS' %}
-                    Open Consultation
-                    {% else %}
-                    View Consultation
-                    {% endif %}
+                    {% if appointment.status == 'IN_PROGRESS' %}Open Consultation{% else %}View Consultation{% endif %}
                 </a>
+                {% endif %}
+
+                {% if has_bill %}
+                <a href="{% url 'billing:detail' appointment.bill.bill_number %}"
+                    class="btn btn-outline-success w-100 mb-2">
+                    <i class="bi bi-receipt-cutoff me-1"></i>View Bill ({{ appointment.bill.bill_number }})
+                </a>
+                {% endif %}
+
+                {% if can_start_or_complete or user.is_admin or has_bill %}
                 <hr>
                 {% endif %}
 
                 {% if appointment.is_terminal %}
                 <p class="text-muted small mb-0">
-                    This appointment is in a terminal state.
-                    No further transitions are allowed.
+                    This appointment is in a terminal state. No further transitions are allowed.
                 </p>
                 {% else %}
 
-                {# ---------- CONFIRM ---------- #}
                 {% if 'CONFIRMED' in available_transitions %}
                 <form method="post" action="{% url 'appointments:transition' appointment.pk %}" class="mb-2">
                     {% csrf_token %}
@@ -170,39 +161,51 @@
                 </form>
                 {% endif %}
 
-                {# ---------- START ---------- #}
                 {% if 'IN_PROGRESS' in available_transitions %}
                 <form method="post" action="{% url 'appointments:transition' appointment.pk %}" class="mb-2">
                     {% csrf_token %}
                     <input type="hidden" name="new_status" value="IN_PROGRESS">
-                    <button type="submit" class="btn btn-info text-dark w-100" {% if not can_start_or_complete
-                        %}disabled title="Only the assigned doctor or an admin can start." {% endif %}>
+                    {% if can_start_or_complete %}
+                    <button type="submit" class="btn btn-info text-dark w-100">
                         <i class="bi bi-play-circle me-1"></i>Start Consultation
                     </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-info text-dark w-100" disabled>
+                        <i class="bi bi-play-circle me-1"></i>Start Consultation
+                    </button>
+                    {% endif %}
                 </form>
                 {% endif %}
 
-                {# ---------- COMPLETE ---------- #}
                 {% if 'COMPLETED' in available_transitions %}
+                {% if can_start_or_complete %}
                 <button type="button" class="btn btn-success w-100 mb-2" data-bs-toggle="modal"
-                    data-bs-target="#completeModal" {% if not can_start_or_complete %}disabled{% endif %}>
+                    data-bs-target="#completeModal">
+                    <i class="bi bi-check2-all me-1"></i>Mark Completed
+                </button>
+                {% else %}
+                <button type="button" class="btn btn-success w-100 mb-2" disabled>
                     <i class="bi bi-check2-all me-1"></i>Mark Completed
                 </button>
                 {% endif %}
+                {% endif %}
 
-                {# ---------- NO-SHOW ---------- #}
                 {% if 'NO_SHOW' in available_transitions %}
                 <form method="post" action="{% url 'appointments:transition' appointment.pk %}" class="mb-2">
                     {% csrf_token %}
                     <input type="hidden" name="new_status" value="NO_SHOW">
-                    <button type="submit" class="btn btn-outline-danger w-100" {% if not can_start_or_complete
-                        %}disabled title="Only the assigned doctor or an admin can mark no-show." {% endif %}>
+                    {% if can_start_or_complete %}
+                    <button type="submit" class="btn btn-outline-danger w-100">
                         <i class="bi bi-person-x me-1"></i>Mark No-Show
                     </button>
+                    {% else %}
+                    <button type="submit" class="btn btn-outline-danger w-100" disabled>
+                        <i class="bi bi-person-x me-1"></i>Mark No-Show
+                    </button>
+                    {% endif %}
                 </form>
                 {% endif %}
 
-                {# ---------- CANCEL ---------- #}
                 {% if 'CANCELLED' in available_transitions %}
                 <button type="button" class="btn btn-outline-warning w-100" data-bs-toggle="modal"
                     data-bs-target="#cancelModal">
@@ -217,10 +220,8 @@
 
 </div>
 
-{# ---------- Modals ---------- #}
 {% if not appointment.is_terminal %}
 
-{# Complete modal — requires notes #}
 <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -228,33 +229,26 @@
                 {% csrf_token %}
                 <input type="hidden" name="new_status" value="COMPLETED">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-check2-all text-success me-2"></i>Mark as Completed
-                    </h5>
+                    <h5 class="modal-title"><i class="bi bi-check2-all text-success me-2"></i>Mark as Completed</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted">
-                        Add clinical notes for this visit. These will be appended to the
-                        appointment record with your name and timestamp.
+                        Add clinical notes for this visit. These will be appended to the appointment record with your
+                        name and timestamp.
                     </p>
                     <textarea name="notes" rows="5" class="form-control"
                         placeholder="e.g. Patient reports improvement. Continue current medication for 2 weeks..."></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        Cancel
-                    </button>
-                    <button type="submit" class="btn btn-success">
-                        Mark Completed
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Mark Completed</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-{# Cancel modal — requires reason #}
 <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -262,27 +256,21 @@
                 {% csrf_token %}
                 <input type="hidden" name="new_status" value="CANCELLED">
                 <div class="modal-header">
-                    <h5 class="modal-title">
-                        <i class="bi bi-x-circle text-warning me-2"></i>Cancel Appointment
-                    </h5>
+                    <h5 class="modal-title"><i class="bi bi-x-circle text-warning me-2"></i>Cancel Appointment</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="small text-muted">
-                        Cancelling this appointment will free the time slot for other bookings.
-                        Please provide a reason for the record.
+                        Cancelling this appointment will free the time slot for other bookings. Please provide a reason
+                        for the record.
                     </p>
                     <label class="form-label small">Cancellation reason <span class="text-danger">*</span></label>
                     <input type="text" name="cancelled_reason" class="form-control" required
                         placeholder="e.g. Patient requested reschedule">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                        Keep it
-                    </button>
-                    <button type="submit" class="btn btn-warning">
-                        Yes, Cancel
-                    </button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep it</button>
+                    <button type="submit" class="btn btn-warning">Yes, Cancel</button>
                 </div>
             </form>
         </div>
