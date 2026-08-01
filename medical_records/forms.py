@@ -48,10 +48,14 @@ class VitalsForm(forms.ModelForm):
     class Meta:
         model = Vitals
         fields = [
-            "bp_systolic", "bp_diastolic",
-            "pulse", "respiratory_rate", "spo2",
+            "bp_systolic",
+            "bp_diastolic",
+            "pulse",
+            "respiratory_rate",
+            "spo2",
             "temperature",
-            "weight_kg", "height_cm",
+            "weight_kg",
+            "height_cm",
         ]
         widgets = {
             "bp_systolic": forms.NumberInput(attrs={"placeholder": "120"}),

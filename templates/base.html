@@ -1,5 +1,6 @@
 {% load static %}
 {% load billing_tags %}
+{% load pharmacy_tags %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -140,6 +141,16 @@
                         </a>
                     </li>
                     {% endif %}
+                    {{% if user.is_authenticated %}
+                    {% if user.role == 'LAB_TECH' or user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'laboratory' in request.resolver_match.namespace %}active fw-semibold{% endif %}"
+                            href="{% url 'laboratory:queue' %}">
+                            <i class="bi bi-clipboard2-pulse me-1"></i>Lab Queue
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
 
                     {# ---------- Clinical (staff — jumps to admin) ---------- #}
                     {% if user.is_authenticated and user.role != 'PATIENT' %}
@@ -177,6 +188,39 @@
                             <i class="bi bi-receipt-cutoff me-1"></i>Billing
                         </a>
                     </li>
+                    {% endif %}
+                    {% if user.is_authenticated %}
+                    {% if user.is_authenticated %}
+                    {% if user.role == 'PHARMACIST' or user.is_admin %}
+                    <li class="nav-item dropdown">
+                        {% low_stock_count as low_count %}
+                        <a class="nav-link dropdown-toggle {% if 'pharmacy' in request.resolver_match.namespace %}active fw-semibold{% endif %}"
+                            href="#" id="pharmacyMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-capsule me-1"></i>Pharmacy
+                            {% if low_count > 0 %}
+                            <span class="badge bg-danger ms-1">{{ low_count }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="pharmacyMenu">
+                            <li>
+                                <a class="dropdown-item {% if request.resolver_match.url_name == 'queue' %}active{% endif %}"
+                                    href="{% url 'pharmacy:queue' %}">
+                                    <i class="bi bi-clipboard-plus me-2"></i>Dispense Queue
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item {% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}"
+                                    href="{% url 'pharmacy:inventory_list' %}">
+                                    <i class="bi bi-boxes me-2"></i>Inventory
+                                    {% if low_count > 0 %}
+                                    <span class="badge bg-danger ms-1">{{ low_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% endif %}
                     {% endif %}
 
                 </ul>

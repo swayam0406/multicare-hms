@@ -144,6 +144,66 @@
                     {% endif %}
                 </div>
 
+                {# ---------- Lab Orders ---------- #}
+                {% if mr.lab_orders.all %}
+                <div class="col-12">
+                    <div class="small text-muted text-uppercase mb-1">
+                        <i class="bi bi-clipboard2-pulse me-1"></i>Lab Orders
+                    </div>
+                    {% for order in mr.lab_orders.all %}
+                    <div class="border rounded p-2 mb-2 bg-light">
+                        <div class="d-flex justify-content-between align-items-center mb-1 small">
+                            <div>
+                                <span class="fw-semibold">{{ order.order_number }}</span>
+                                <span class="text-muted ms-2">{{ order.created_at|date:"M j, g:i A" }}</span>
+                            </div>
+                            {% if order.status == 'COMPLETED' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% elif order.status == 'CANCELLED' %}
+                            <span class="badge bg-secondary">Cancelled</span>
+                            {% elif order.status == 'IN_PROGRESS' %}
+                            <span class="badge bg-info text-dark">In Progress</span>
+                            {% elif order.status == 'SAMPLE_COLLECTED' %}
+                            <span class="badge bg-warning text-dark">Sample Collected</span>
+                            {% elif order.status == 'ORDERED' %}
+                            <span class="badge bg-primary">Ordered</span>
+                            {% endif %}
+                        </div>
+                        {% if order.clinical_notes %}
+                        <div class="small text-muted mb-2">
+                            <i class="bi bi-chat-left-text me-1"></i>{{ order.clinical_notes }}
+                        </div>
+                        {% endif %}
+                        <ul class="list-unstyled small mb-0">
+                            {% for item in order.items.all %}
+                            <li class="mb-1 {% if item.is_abnormal %}text-danger{% endif %}">
+                                <span class="fw-semibold">{{ item.service.name }}</span>
+                                <span class="text-muted small">({{ item.service.code }})</span>
+                                &mdash;
+                                {% if item.result_value %}
+                                <strong>{{ item.result_display }}</strong>
+                                {% if item.reference_range %}
+                                <span class="text-muted">(ref: {{ item.reference_range }})</span>
+                                {% endif %}
+                                {% if item.is_abnormal %}
+                                <span class="badge bg-danger ms-1">Abnormal</span>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">Pending</span>
+                                {% endif %}
+                                {% if item.result_notes %}
+                                <div class="text-muted small ms-3">
+                                    <i class="bi bi-chat-left me-1"></i>{{ item.result_notes }}
+                                </div>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 {# ---------- Follow-up ---------- #}
                 {% if mr.follow_up_recommendation %}
                 <div class="col-12">

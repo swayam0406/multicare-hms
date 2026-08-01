@@ -24,6 +24,8 @@ class User(AbstractUser):
         NURSE = "NURSE", "Nurse"
         RECEPTIONIST = "RECEPTIONIST", "Receptionist"
         PATIENT = "PATIENT", "Patient"
+        LAB_TECH = "LAB_TECH", "Lab Technician"
+        PHARMACIST = "PHARMACIST", "Pharmacist"
 
     # Override email to make it required and unique
     email = models.EmailField(

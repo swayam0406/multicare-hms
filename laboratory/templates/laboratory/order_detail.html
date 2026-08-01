@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}{{ order.order_number }} | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="mb-1">
+    <a href="{% url 'laboratory:queue' %}" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Back to lab queue
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-clipboard2-pulse text-info me-2"></i>{{ order.order_number }}
+        </h2>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if order.status == 'ORDERED' %}
+            <span class="badge bg-primary fs-6">Ordered</span>
+            {% elif order.status == 'SAMPLE_COLLECTED' %}
+            <span class="badge bg-warning text-dark fs-6">Sample Collected</span>
+            {% elif order.status == 'IN_PROGRESS' %}
+            <span class="badge bg-info text-dark fs-6">In Progress</span>
+            {% elif order.status == 'COMPLETED' %}
+            <span class="badge bg-success fs-6">Completed</span>
+            {% elif order.status == 'CANCELLED' %}
+            <span class="badge bg-danger fs-6">Cancelled</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        {# Patient + Order info #}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 text-primary"><i class="bi bi-info-circle me-2"></i>Order Info</h6>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0 small">
+                    <dt class="col-sm-3 text-muted">Patient</dt>
+                    <dd class="col-sm-9">
+                        {{ order.patient.full_name }}
+                        <span class="text-muted">({{ order.patient.patient_id }})</span>
+                    </dd>
+                    <dt class="col-sm-3 text-muted">Doctor</dt>
+                    <dd class="col-sm-9">
+                        {{ order.medical_record.appointment.doctor.display_name }}
+                        <div class="small text-muted">{{ order.medical_record.appointment.doctor.department.name }}
+                        </div>
+                    </dd>
+                    <dt class="col-sm-3 text-muted">Ordered</dt>
+                    <dd class="col-sm-9">{{ order.created_at|date:"M j, Y g:i A" }}</dd>
+                    {% if order.clinical_notes %}
+                    <dt class="col-sm-3 text-muted">Notes</dt>
+                    <dd class="col-sm-9">{{ order.clinical_notes }}</dd>
+                    {% endif %}
+                    {% if order.cancelled_reason %}
+                    <dt class="col-sm-3 text-muted">Cancellation reason</dt>
+                    <dd class="col-sm-9 text-warning-emphasis">{{ order.cancelled_reason }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+
+        {# Result entry form #}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 text-primary">
+                    <i class="bi bi-file-earmark-medical me-2"></i>Results
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if order.is_terminal %}
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-3">Test</th>
+                                <th>Result</th>
+                                <th>Reference</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr {% if item.is_abnormal %}class="table-danger" {% endif %}>
+                                <td class="ps-3 small">{{ item.service.name }}</td>
+                                <td class="small">
+                                    <strong>{{ item.result_display }}</strong>
+                                    {% if item.is_abnormal %}
+                                    <span class="badge bg-danger ms-1">Abnormal</span>
+                                    {% endif %}
+                                </td>
+                                <td class="small text-muted">{{ item.reference_range|default:"—" }}</td>
+                                <td class="small text-muted">{{ item.result_notes|default:"—" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <form method="post" action="{% url 'laboratory:result_entry' order.pk %}">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-3 align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3" style="min-width:180px;">Test</th>
+                                    <th style="min-width:130px;">Result value</th>
+                                    <th>Unit</th>
+                                    <th>Reference</th>
+                                    <th class="text-center">Abnormal?</th>
+                                    <th style="min-width:200px;">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items.all %}
+                                <tr>
+                                    <td class="ps-3 small">
+                                        <div>{{ item.service.name }}</div>
+                                        <div class="text-muted">
+                                            <span class="badge bg-light text-secondary">{{ item.service.code }}</span>
+                                            {% if item.service.lab_profile %}
+                                            {{ item.service.lab_profile.get_sample_type_display }}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="item-{{ item.pk }}-result_value"
+                                            value="{{ item.result_value }}" class="form-control form-control-sm">
+                                    </td>
+                                    <td class="small text-muted">{{ item.result_unit|default:"—" }}</td>
+                                    <td class="small text-muted">{{ item.reference_range|default:"—" }}</td>
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input"
+                                            name="item-{{ item.pk }}-is_abnormal" {% if item.is_abnormal %}checked{%
+                                            endif %}>
+                                    </td>
+                                    <td>
+                                        <input type="text" name="item-{{ item.pk }}-result_notes"
+                                            value="{{ item.result_notes }}" class="form-control form-control-sm">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i>Save Results
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h6 class="mb-0 text-primary"><i class="bi bi-lightning me-2"></i>Actions</h6>
+            </div>
+            <div class="card-body">
+                {% if order.is_terminal %}
+                <p class="text-muted small mb-0">This order is finalized. No further transitions.</p>
+                {% else %}
+                {% if 'SAMPLE_COLLECTED' in order.available_transitions %}
+                <form method="post" action="{% url 'laboratory:order_transition' order.pk %}" class="mb-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="new_status" value="SAMPLE_COLLECTED">
+                    <button type="submit" class="btn btn-warning text-dark w-100">
+                        <i class="bi bi-droplet me-1"></i>Mark Sample Collected
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if 'IN_PROGRESS' in order.available_transitions %}
+                <form method="post" action="{% url 'laboratory:order_transition' order.pk %}" class="mb-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="new_status" value="IN_PROGRESS">
+                    <button type="submit" class="btn btn-info text-dark w-100">
+                        <i class="bi bi-flask me-1"></i>Mark In Progress
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if 'COMPLETED' in order.available_transitions %}
+                <form method="post" action="{% url 'laboratory:order_transition' order.pk %}" class="mb-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="new_status" value="COMPLETED">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-check2-all me-1"></i>Complete Order
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if 'CANCELLED' in order.available_transitions %}
+                <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal"
+                    data-bs-target="#cancelOrderModal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel Order
+                </button>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% if not order.is_terminal %}
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{% url 'laboratory:order_transition' order.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="new_status" value="CANCELLED">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-x-circle text-danger me-2"></i>Cancel Lab Order</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="form-label small">Cancellation reason <span class="text-danger">*</span></label>
+                    <input type="text" name="cancelled_reason" class="form-control" required
+                        placeholder="e.g., Sample rejected — hemolyzed">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Keep it</button>
+                    <button type="submit" class="btn btn-danger">Yes, Cancel Order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

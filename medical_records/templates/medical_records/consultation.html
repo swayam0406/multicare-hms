@@ -278,6 +278,136 @@
         {% endif %}
     </div>
 </form>
+{# ---------- T-7.3: Order Lab Tests ---------- #}
+{% if appointment.status == 'IN_PROGRESS' %}
+<div class="text-end mt-3 mb-4">
+    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#labOrderModal">
+        <i class="bi bi-clipboard-plus me-1"></i>Order Lab Tests
+    </button>
+</div>
+
+<div class="modal fade" id="labOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'laboratory:order_create' appointment.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-clipboard-plus text-info me-2"></i>Order Lab Tests
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Select tests <span
+                                class="text-danger">*</span></label>
+                        <input type="text" id="labFilter" class="form-control form-control-sm mb-2"
+                            placeholder="Type to filter tests...">
+                        <div id="labServiceList" class="border rounded p-2"
+                            style="max-height: 320px; overflow-y: auto;">
+                            {% for svc in lab_services %}
+                            <div class="form-check lab-service-row">
+                                <input class="form-check-input" type="checkbox" name="services" value="{{ svc.pk }}"
+                                    id="svc-{{ svc.pk }}">
+                                <label class="form-check-label small" for="svc-{{ svc.pk }}">
+                                    <span class="badge bg-light text-secondary">{{ svc.code }}</span>
+                                    <span class="lab-service-name">{{ svc.name }}</span>
+                                    <span class="text-muted small">— ₹{{ svc.default_price }}</span>
+                                </label>
+                            </div>
+                            {% empty %}
+                            <p class="text-muted small mb-0">No lab tests available in catalog.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-semibold">Clinical notes (optional)</label>
+                        <textarea name="clinical_notes" rows="2" class="form-control"
+                            placeholder="e.g., Rule out dengue"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="bi bi-clipboard-plus me-1"></i>Create Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var filter = document.getElementById('labFilter');
+        if (!filter) return;
+        filter.addEventListener('input', function () {
+            var term = filter.value.toLowerCase();
+            document.querySelectorAll('.lab-service-row').forEach(function (row) {
+                var name = row.querySelector('.lab-service-name').textContent.toLowerCase();
+                var badge = row.querySelector('.badge').textContent.toLowerCase();
+                row.style.display = (name.includes(term) || badge.includes(term)) ? '' : 'none';
+            });
+        });
+    });
+</script>
+{% endif %}
+
+{# ---------- Existing lab orders for this visit ---------- #}
+{% if visit_lab_orders %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white">
+        <h6 class="mb-0 text-info">
+            <i class="bi bi-clipboard2-pulse me-2"></i>Lab Orders for This Visit
+        </h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Order #</th>
+                        <th>Ordered</th>
+                        <th>Tests</th>
+                        <th class="pe-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in visit_lab_orders %}
+                    <tr>
+                        <td class="ps-3 small fw-semibold">{{ order.order_number }}</td>
+                        <td class="small">{{ order.created_at|date:"M j, g:i A" }}</td>
+                        <td class="small">
+                            {% for it in order.items.all %}
+                            <div>{{ it.service.name }}
+                                {% if it.result_value %}
+                                — <strong>{{ it.result_display }}</strong>
+                                {% if it.is_abnormal %}<span class="badge bg-danger">Abnormal</span>{% endif %}
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </td>
+                        <td class="pe-3">
+                            {% if order.status == 'ORDERED' %}
+                            <span class="badge bg-primary">Ordered</span>
+                            {% elif order.status == 'SAMPLE_COLLECTED' %}
+                            <span class="badge bg-warning text-dark">Sample Collected</span>
+                            {% elif order.status == 'IN_PROGRESS' %}
+                            <span class="badge bg-info text-dark">In Progress</span>
+                            {% elif order.status == 'COMPLETED' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% elif order.status == 'CANCELLED' %}
+                            <span class="badge bg-secondary">Cancelled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
 

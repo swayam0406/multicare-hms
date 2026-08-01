@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-boxes text-primary me-2"></i>Inventory
+        </h2>
+        <span class="text-muted small">
+            {{ paginator.count }} item{{ paginator.count|pluralize }}
+            &middot; {{ low_stock_total }} low-stock
+        </span>
+    </div>
+</div>
+
+<div class="card border-0 bg-light mb-4">
+    <div class="card-body py-3">
+        <form method="get" action="{% url 'pharmacy:inventory_list' %}" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label small mb-1">Search</label>
+                <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm"
+                    placeholder="Medication name...">
+            </div>
+            <div class="col-md-3">
+                <div class="form-check mt-4">
+                    {% if low_only %}
+                    <input class="form-check-input" type="checkbox" name="low" value="1" id="lowOnly" checked>
+                    {% else %}
+                    <input class="form-check-input" type="checkbox" name="low" value="1" id="lowOnly">
+                    {% endif %}
+                    <label class="form-check-label small" for="lowOnly">
+                        Low stock only
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        {% if items %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Medication</th>
+                        <th class="text-center">In stock</th>
+                        <th class="text-center">Threshold</th>
+                        <th class="text-end">Cost</th>
+                        <th class="text-end">Sale</th>
+                        <th>Status</th>
+                        <th class="text-end pe-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td class="ps-3 small">
+                            <div class="fw-semibold">{{ item.medication.name }}</div>
+                            <div class="small text-muted">{{ item.medication.strength }} &middot; {{
+                                item.medication.get_form_display }}</div>
+                        </td>
+                        <td class="text-center small fw-semibold
+                                   {% if item.is_low_stock %}text-danger{% endif %}">
+                            {{ item.quantity_on_hand }}
+                        </td>
+                        <td class="text-center small text-muted">{{ item.reorder_threshold }}</td>
+                        <td class="text-end small">₹{{ item.unit_cost }}</td>
+                        <td class="text-end small">₹{{ item.unit_sale_price }}</td>
+                        <td>
+                            {% if item.is_low_stock %}
+                            <span class="badge bg-danger">Low</span>
+                            {% else %}
+                            <span class="badge bg-success">OK</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-3">
+                            <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal"
+                                data-bs-target="#receiveModal-{{ item.pk }}" title="Receive stock">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal"
+                                data-bs-target="#adjustModal-{{ item.pk }}" title="Adjust">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <a href="{% url 'pharmacy:inventory_movements' item.pk %}"
+                                class="btn btn-sm btn-outline-secondary" title="History">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox text-secondary" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 text-muted">No inventory items found</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# ---------- Modals per item ---------- #}
+{% for item in items %}
+<div class="modal fade" id="receiveModal-{{ item.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{% url 'pharmacy:inventory_receive' item.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-lg text-success me-2"></i>Receive Stock
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">
+                        <strong>{{ item.medication.name }}</strong> &middot; current stock: {{ item.quantity_on_hand }}
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small">Quantity received <span class="text-danger">*</span></label>
+                        <input type="number" name="quantity" min="1" class="form-control" required>
+                    </div>
+                    <div>
+                        <label class="form-label small">Reference (optional)</label>
+                        <input type="text" name="reference" class="form-control" placeholder="PO number, invoice ref">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle me-1"></i>Receive
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="adjustModal-{{ item.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{% url 'pharmacy:inventory_adjust' item.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil text-warning me-2"></i>Adjust Stock
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted mb-2">
+                        <strong>{{ item.medication.name }}</strong> &middot; current stock: {{ item.quantity_on_hand }}
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label small">
+                            Adjustment (signed) <span class="text-danger">*</span>
+                        </label>
+                        <input type="number" name="quantity" class="form-control" required
+                            placeholder="e.g., -5 or +10">
+                        <div class="form-text small">
+                            Positive to add, negative to remove.
+                        </div>
+                    </div>
+                    <div>
+                        <label class="form-label small">Reason <span class="text-danger">*</span></label>
+                        <textarea name="reason" rows="2" class="form-control" required
+                            placeholder="e.g., Damaged during inventory count"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-check-circle me-1"></i>Apply
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{# ---------- Pagination ---------- #}
+{% if is_paginated %}
+<nav aria-label="Pagination" class="mt-4">
+    <ul class="pagination justify-content-center mb-0">
+        <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+            {% if page_obj.has_previous %}
+            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+            {% else %}
+            <span class="page-link"><i class="bi bi-chevron-left"></i></span>
+            {% endif %}
+        </li>
+        <li class="page-item active">
+            <span class="page-link">
+                {{ page_obj.number }} / {{ paginator.num_pages }}
+            </span>
+        </li>
+        <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+            {% if page_obj.has_next %}
+            <a class="page-link" href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+            {% else %}
+            <span class="page-link"><i class="bi bi-chevron-right"></i></span>
+            {% endif %}
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+{% endblock %}

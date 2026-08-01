@@ -13,6 +13,8 @@ urlpatterns = [
     path("appointments/", include("appointments.urls", namespace="appointments")),
     path("medical-records/", include("medical_records.urls", namespace="medical_records")),
     path("billing/", include("billing.urls", namespace="billing")),
+    path("laboratory/", include("laboratory.urls", namespace="laboratory")),
+    path("pharmacy/", include("pharmacy.urls", namespace="pharmacy")),
     path("", include("core.urls", namespace="core")),
 ]
 

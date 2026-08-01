@@ -9,7 +9,12 @@ from django.utils import timezone
 
 from appointments.models import Appointment
 from billing.models import (
-    Bill, BillItem, InsuranceClaim, Payment, Refund, ServiceCatalog,
+    Bill,
+    BillItem,
+    InsuranceClaim,
+    Payment,
+    Refund,
+    ServiceCatalog,
 )
 from doctors.models import Department, Doctor, DoctorAvailability
 from patients.models import Patient
@@ -28,47 +33,64 @@ class FinancialSetup(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="fi", email="fi@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="fi",
+            email="fi@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="FI-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="FI-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="fis", email="fis@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="fis",
+            email="fis@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.admin = User.objects.create_user(
-            username="fia", email="fia@t.local",
-            password="pass1234", role=User.Role.ADMIN,
+            username="fia",
+            email="fia@t.local",
+            password="pass1234",
+            role=User.Role.ADMIN,
         )
         cls.patient = Patient.objects.create(
-            first_name="P", last_name="One",
+            first_name="P",
+            last_name="One",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543210",
+            gender=Patient.Gender.MALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
         monday = _next_weekday(0)
         cls.appt = Appointment.objects.create(
-            patient=cls.patient, doctor=cls.doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(monday, time(10, 0))
-            ),
-            reason="Test", booked_by=cls.staff,
+            patient=cls.patient,
+            doctor=cls.doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(monday, time(10, 0))),
+            reason="Test",
+            booked_by=cls.staff,
         )
         cls.cons = ServiceCatalog.objects.create(
-            code="CONS-GEN", name="Consultation",
-            category="CONSULTATION", default_price=Decimal("500.00"),
+            code="CONS-GEN",
+            name="Consultation",
+            category="CONSULTATION",
+            default_price=Decimal("500.00"),
         )
         cls.mri = ServiceCatalog.objects.create(
-            code="IMG-MRI", name="MRI",
-            category="IMAGING", default_price=Decimal("7000.00"),
+            code="IMG-MRI",
+            name="MRI",
+            category="IMAGING",
+            default_price=Decimal("7000.00"),
         )
 
     def _finalized_bill(self, total_expected):
@@ -91,16 +113,20 @@ class PaymentRefundLedgerTests(FinancialSetup):
         """
         bill = self._finalized_bill(Decimal("7500.00"))
         payment = Payment.objects.create(
-            bill=bill, amount=Decimal("3000.00"),
-            method="CASH", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("3000.00"),
+            method="CASH",
+            received_by=self.staff,
         )
         bill.refresh_from_db()
         self.assertEqual(bill.paid_amount, Decimal("3000.00"))
         self.assertEqual(bill.status, "PARTIAL")
 
         Refund.objects.create(
-            payment=payment, amount=Decimal("1000.00"),
-            method="CASH", reason="Duplicate charge",
+            payment=payment,
+            amount=Decimal("1000.00"),
+            method="CASH",
+            reason="Duplicate charge",
             processed_by=self.admin,
         )
 
@@ -118,15 +144,19 @@ class PaymentRefundLedgerTests(FinancialSetup):
     def test_full_payment_then_full_refund_moves_bill_back_to_finalized(self):
         bill = self._finalized_bill(Decimal("7500.00"))
         payment = Payment.objects.create(
-            bill=bill, amount=Decimal("7500.00"),
-            method="UPI", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("7500.00"),
+            method="UPI",
+            received_by=self.staff,
         )
         bill.refresh_from_db()
         self.assertEqual(bill.status, "PAID")
 
         Refund.objects.create(
-            payment=payment, amount=Decimal("7500.00"),
-            method="UPI", reason="Bill voided",
+            payment=payment,
+            amount=Decimal("7500.00"),
+            method="UPI",
+            reason="Bill voided",
             processed_by=self.admin,
         )
 
@@ -144,23 +174,31 @@ class PaymentRefundLedgerTests(FinancialSetup):
         """
         bill = self._finalized_bill(Decimal("7500.00"))
         Payment.objects.create(
-            bill=bill, amount=Decimal("3000.00"),
-            method="CASH", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("3000.00"),
+            method="CASH",
+            received_by=self.staff,
         )
         Payment.objects.create(
-            bill=bill, amount=Decimal("2000.00"),
-            method="UPI", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("2000.00"),
+            method="UPI",
+            received_by=self.staff,
         )
         p3 = Payment.objects.create(
-            bill=bill, amount=Decimal("2500.00"),
-            method="CARD", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("2500.00"),
+            method="CARD",
+            received_by=self.staff,
         )
         bill.refresh_from_db()
         self.assertEqual(bill.status, "PAID")
 
         Refund.objects.create(
-            payment=p3, amount=Decimal("2500.00"),
-            method="CARD", reason="Card chargeback",
+            payment=p3,
+            amount=Decimal("2500.00"),
+            method="CARD",
+            reason="Card chargeback",
             processed_by=self.admin,
         )
 
@@ -177,8 +215,10 @@ class InsuranceEndToEndTests(FinancialSetup):
         bill = self._finalized_bill(Decimal("7500.00"))
 
         claim = InsuranceClaim.objects.create(
-            bill=bill, provider="Star Health",
-            policy_number="POL-1", amount_claimed=Decimal("8000.00"),
+            bill=bill,
+            provider="Star Health",
+            policy_number="POL-1",
+            amount_claimed=Decimal("8000.00"),
         )
         claim.mark_approved(Decimal("7500.00"))
         claim.mark_paid(received_by=self.staff)
@@ -196,8 +236,10 @@ class InsuranceEndToEndTests(FinancialSetup):
 
         # Insurance covers ₹5000 of ₹7500
         claim = InsuranceClaim.objects.create(
-            bill=bill, provider="Star Health",
-            policy_number="POL-1", amount_claimed=Decimal("5000.00"),
+            bill=bill,
+            provider="Star Health",
+            policy_number="POL-1",
+            amount_claimed=Decimal("5000.00"),
         )
         claim.mark_approved(Decimal("5000.00"))
         claim.mark_paid()
@@ -208,8 +250,10 @@ class InsuranceEndToEndTests(FinancialSetup):
 
         # Patient pays the remaining ₹2500 in cash
         Payment.objects.create(
-            bill=bill, amount=Decimal("2500.00"),
-            method="CASH", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("2500.00"),
+            method="CASH",
+            received_by=self.staff,
         )
         bill.refresh_from_db()
         self.assertEqual(bill.status, "PAID")
@@ -220,16 +264,20 @@ class InsuranceEndToEndTests(FinancialSetup):
 
         # Patient pays ₹5000 first
         Payment.objects.create(
-            bill=bill, amount=Decimal("5000.00"),
-            method="CASH", received_by=self.staff,
+            bill=bill,
+            amount=Decimal("5000.00"),
+            method="CASH",
+            received_by=self.staff,
         )
         bill.refresh_from_db()
         self.assertEqual(bill.balance, Decimal("2500.00"))
 
         # Insurance approves ₹4000, more than remaining balance
         claim = InsuranceClaim.objects.create(
-            bill=bill, provider="Star Health",
-            policy_number="POL-1", amount_claimed=Decimal("4000.00"),
+            bill=bill,
+            provider="Star Health",
+            policy_number="POL-1",
+            amount_claimed=Decimal("4000.00"),
         )
         claim.mark_approved(Decimal("4000.00"))
         claim.mark_paid()
@@ -250,19 +298,21 @@ class BillNumberSequenceTests(FinancialSetup):
         # Reset any existing bills for a clean run
         Bill.objects.all().delete()
         DoctorAvailability.objects.create(
-            doctor=self.doctor, weekday=1,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=self.doctor,
+            weekday=1,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         b1 = Bill.objects.create(appointment=self.appt, patient=self.patient)
 
         # Second appointment
         tuesday = _next_weekday(1)
         appt2 = Appointment.objects.create(
-            patient=self.patient, doctor=self.doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(tuesday, time(10, 0))
-            ),
-            reason="Second", booked_by=self.staff,
+            patient=self.patient,
+            doctor=self.doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(tuesday, time(10, 0))),
+            reason="Second",
+            booked_by=self.staff,
         )
         b2 = Bill.objects.create(appointment=appt2, patient=self.patient)
 

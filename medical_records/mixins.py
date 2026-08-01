@@ -22,9 +22,8 @@ class ConsultationAccessMixin(LoginRequiredMixin):
 
         # Look up appointment BEFORE the handler runs.
         from appointments.models import Appointment
-        self.appointment = get_object_or_404(
-            Appointment, pk=kwargs["appointment_pk"]
-        )
+
+        self.appointment = get_object_or_404(Appointment, pk=kwargs["appointment_pk"])
 
         # RBAC
         user = request.user

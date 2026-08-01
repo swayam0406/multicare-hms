@@ -189,10 +189,6 @@ class Bill(models.Model):
 
     @property
     def paid_amount(self) -> Decimal:
-        """
-        Sum of net completed payments (payment.amount - sum of its refunds).
-        Uses net_amount to correctly reflect partial refunds.
-        """
         total = Decimal("0.00")
         for payment in self.payments.filter(status="COMPLETED"):
             total += payment.net_amount
@@ -242,6 +238,33 @@ class Bill(models.Model):
         else:
             self.status = self.Status.FINALIZED
         self.save(update_fields=["status", "updated_at"])
+
+    def system_add_item(
+        self,
+        service: "ServiceCatalog",
+        quantity: int = 1,
+        unit_price: Decimal | None = None,
+        description: str = "",
+    ) -> "BillItem":
+        """
+        Add an item bypassing the draft-only rule.
+        Used by lab and pharmacy signals to append post-finalization charges.
+        Refuses on CANCELLED / CLOSED bills.
+        """
+        if self.status in (self.Status.CANCELLED, self.Status.CLOSED):
+            raise ValidationError(f"Cannot add items to a {self.get_status_display()} bill.")
+
+        item = BillItem(
+            bill=self,
+            service=service,
+            quantity=quantity,
+        )
+        if unit_price is not None:
+            item.unit_price = unit_price
+        if description:
+            item.description = description
+        item.save()
+        return item
 
 
 class BillItem(models.Model):
@@ -381,7 +404,6 @@ class Payment(models.Model):
 
     @property
     def net_amount(self) -> Decimal:
-        """Payment amount minus any refunds."""
         return self.amount - self.refunded_amount
 
     def clean(self):
@@ -565,16 +587,7 @@ class InsuranceClaim(models.Model):
 
 
 class Refund(models.Model):
-    """
-    An auditable reversal of a completed payment. Partial refunds supported.
-
-    Rules:
-      - Payment must be COMPLETED.
-      - Total refunds cannot exceed the payment amount.
-      - Refunds are immutable once created (like completed Payments).
-      - Refunds cannot be deleted.
-      - When cumulative refunds == payment.amount, the Payment flips to REFUNDED.
-    """
+    """Auditable reversal of a completed payment."""
 
     class Method(models.TextChoices):
         CASH = "CASH", "Cash"
@@ -592,20 +605,14 @@ class Refund(models.Model):
         max_digits=10,
         decimal_places=2,
         validators=[MinValueValidator(Decimal("0.01"))],
-        help_text="Refund amount in INR.",
     )
     method = models.CharField(
         max_length=15,
         choices=Method.choices,
         default=Method.CASH,
-        help_text="How the money was returned to the patient.",
     )
     reason = models.TextField(help_text="Why this refund was issued.")
-    reference = models.CharField(
-        max_length=100,
-        blank=True,
-        help_text="External reference (bank ref, cheque number).",
-    )
+    reference = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
 
     processed_by = models.ForeignKey(
@@ -634,7 +641,6 @@ class Refund(models.Model):
     def clean(self):
         super().clean()
 
-        # Immutability — refunds can't be edited after creation
         if self.pk:
             original = Refund.objects.filter(pk=self.pk).first()
             if original:
@@ -642,18 +648,15 @@ class Refund(models.Model):
                     if getattr(self, field) != getattr(original, field):
                         raise ValidationError(f"Refunds are immutable. Cannot change '{field}'.")
 
-        # Payment must be COMPLETED (not PENDING/FAILED/already-REFUNDED)
         if self.payment_id and self.payment.status != Payment.Status.COMPLETED:
             raise ValidationError(
                 f"Refunds can only be issued against completed payments "
                 f"(current: {self.payment.get_status_display()})."
             )
 
-        # Reason required
         if not self.reason or not self.reason.strip():
             raise ValidationError("A refund reason is required.")
 
-        # Total refunds can't exceed payment amount
         if self.payment_id and not self.pk:
             existing = self.payment.refunded_amount
             if existing + self.amount > self.payment.amount:
@@ -670,15 +673,12 @@ class Refund(models.Model):
 
         super().save(*args, **kwargs)
 
-        # If cumulative refunds equal the payment amount, flip payment to REFUNDED
-        # This uses queryset-level update to bypass the immutability clean().
         payment = self.payment
         if payment.refunded_amount >= payment.amount:
             Payment.objects.filter(pk=payment.pk).update(
                 status=Payment.Status.REFUNDED,
             )
 
-        # Update bill status (paid_amount uses net_amount, so it drops accordingly)
         payment.refresh_from_db()
         payment.bill.refresh_status_after_payment()
 

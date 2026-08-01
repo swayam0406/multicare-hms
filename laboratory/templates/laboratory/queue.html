@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Queue | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-clipboard2-pulse text-info me-2"></i>Lab Queue
+        </h2>
+        <span class="text-muted small">Non-terminal orders — grouped by workflow stage</span>
+    </div>
+</div>
+
+{% for bucket in buckets %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <h6 class="mb-0 text-primary">
+            {% if bucket.status == 'ORDERED' %}
+            <i class="bi bi-hourglass me-2"></i>{{ bucket.label }}
+            {% elif bucket.status == 'SAMPLE_COLLECTED' %}
+            <i class="bi bi-droplet me-2"></i>{{ bucket.label }}
+            {% elif bucket.status == 'IN_PROGRESS' %}
+            <i class="bi bi-flask me-2"></i>{{ bucket.label }}
+            {% endif %}
+        </h6>
+        <span class="badge bg-secondary">{{ bucket.orders|length }}</span>
+    </div>
+    <div class="card-body p-0">
+        {% if bucket.orders %}
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Order #</th>
+                        <th>Patient</th>
+                        <th>Doctor</th>
+                        <th>Tests</th>
+                        <th>Ordered</th>
+                        <th class="pe-3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in bucket.orders %}
+                    <tr>
+                        <td class="ps-3 small fw-semibold">{{ order.order_number }}</td>
+                        <td class="small">
+                            {{ order.patient.full_name }}
+                            <div class="small text-muted">{{ order.patient.patient_id }}</div>
+                        </td>
+                        <td class="small">
+                            {{ order.medical_record.appointment.doctor.display_name }}
+                        </td>
+                        <td class="small">
+                            {% for it in order.items.all %}
+                            <span class="badge bg-light text-secondary">{{ it.service.code }}</span>
+                            {% endfor %}
+                        </td>
+                        <td class="small">{{ order.created_at|date:"M j, g:i A" }}</td>
+                        <td class="pe-3 text-end">
+                            <a href="{% url 'laboratory:order_detail' order.pk %}"
+                                class="btn btn-sm btn-outline-primary">
+                                Open
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted small text-center py-3 mb-0">No orders in this stage.</p>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

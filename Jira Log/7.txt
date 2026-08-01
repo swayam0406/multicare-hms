@@ -1,0 +1,43 @@
+Epic: EPIC-6 Resources Management
+Sprint: Sprint 7 - Laboratory, Pharmacy & Inventory
+Duration: 1 iteration
+Story Points: 21 planned / 21 completed
+Velocity: 21
+
+Stories:
+  - key: HMS-48
+    summary: Doctor orders lab tests during consultation
+    story_points: 3
+    status: Done
+  - key: HMS-49
+    summary: Lab technician queue with result recording
+    story_points: 3
+    status: Done
+  - key: HMS-50
+    summary: Lab results visible in patient history
+    story_points: 2
+    status: Done
+  - key: HMS-51
+    summary: Pharmacist prescription queue
+    story_points: 3
+    status: Done
+  - key: HMS-52
+    summary: Medication dispense with inventory drawdown
+    story_points: 2
+    status: Done
+  - key: HMS-53
+    summary: Inventory management (list, receive, adjust)
+    story_points: 3
+    status: Done
+  - key: HMS-54
+    summary: Low-stock alerts
+    story_points: 1
+    status: Done
+  - key: HMS-55
+    summary: Auto-bill lab tests and dispenses
+    story_points: 2
+    status: Done
+  - key: HMS-56
+    summary: Test coverage for resources domain
+    story_points: 2
+    status: Done

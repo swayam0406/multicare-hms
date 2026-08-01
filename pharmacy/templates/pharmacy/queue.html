@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Pharmacy Queue | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-capsule text-primary me-2"></i>Pharmacy Queue
+        </h2>
+        <span class="text-muted small">Prescriptions awaiting dispense</span>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        {% if prescriptions %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Patient</th>
+                        <th>Doctor</th>
+                        <th>Visit date</th>
+                        <th>Items</th>
+                        <th class="text-end pe-3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rx in prescriptions %}
+                    <tr>
+                        <td class="ps-3 small">
+                            {{ rx.medical_record.appointment.patient.full_name }}
+                            <div class="small text-muted">{{ rx.medical_record.appointment.patient.patient_id }}</div>
+                        </td>
+                        <td class="small">{{ rx.medical_record.appointment.doctor.display_name }}</td>
+                        <td class="small">{{ rx.medical_record.appointment.scheduled_start|date:"M j, Y" }}</td>
+                        <td class="small">
+                            {% for item in rx.items.all %}
+                            <div>
+                                <span class="fw-semibold">{{ item.medication.name }}</span>
+                                <span class="text-muted">{{ item.medication.strength }}</span>
+                                &mdash; {{ item.dose }}, {{ item.get_frequency_display }}, {{ item.duration_days }}d
+                            </div>
+                            {% endfor %}
+                        </td>
+                        <td class="text-end pe-3">
+                            <a href="{% url 'pharmacy:dispense_create' rx.pk %}" class="btn btn-sm btn-primary">
+                                <i class="bi bi-clipboard-plus me-1"></i>Dispense
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-check2-circle text-success" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 text-muted">Queue empty</h5>
+            <p class="text-muted small mb-0">
+                No prescriptions awaiting dispense right now.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

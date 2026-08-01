@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Dispense Prescription | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="mb-1">
+    <a href="{% url 'pharmacy:queue' %}" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Back to queue
+    </a>
+</div>
+
+<div class="mb-4">
+    <h2 class="mb-1">
+        <i class="bi bi-clipboard-plus text-primary me-2"></i>Dispense Prescription
+    </h2>
+    <div class="small text-muted">
+        Patient: <strong>{{ prescription.medical_record.appointment.patient.full_name }}</strong>
+        &middot; Doctor: {{ prescription.medical_record.appointment.doctor.display_name }}
+        &middot; {{ prescription.medical_record.appointment.scheduled_start|date:"M j, Y" }}
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white">
+            <h6 class="mb-0 text-primary">
+                <i class="bi bi-list-ul me-2"></i>Items to Dispense
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3" style="min-width:200px;">Prescribed</th>
+                            <th>Inventory</th>
+                            <th style="min-width:80px;">In stock</th>
+                            <th style="min-width:130px;">Dispense qty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            <td class="ps-3 small">
+                                <div class="fw-semibold">
+                                    {{ row.prescription_item.medication.name }}
+                                    <span class="text-muted">{{ row.prescription_item.medication.strength }}</span>
+                                </div>
+                                <div class="small text-muted">
+                                    {{ row.prescription_item.dose }},
+                                    {{ row.prescription_item.get_frequency_display }},
+                                    {{ row.prescription_item.duration_days }} day{{
+                                    row.prescription_item.duration_days|pluralize }}
+                                </div>
+                            </td>
+                            <td class="small">
+                                {% if row.inventory_item %}
+                                <input type="hidden" name="item-{{ row.prescription_item.pk }}-inventory_id"
+                                    value="{{ row.inventory_item.pk }}">
+                                {{ row.inventory_item.medication.name }}
+                                <div class="small text-muted">₹{{ row.inventory_item.unit_sale_price }} / unit</div>
+                                {% else %}
+                                <span class="text-danger">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>Not in inventory
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="small">
+                                {% if row.inventory_item %}
+                                <span class="{% if row.low_stock %}text-danger fw-semibold{% endif %}">
+                                    {{ row.in_stock }}
+                                </span>
+                                {% if row.low_stock %}
+                                <div class="small text-danger">Low stock</div>
+                                {% endif %}
+                                {% else %}
+                                —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.inventory_item %}
+                                <input type="number" name="item-{{ row.prescription_item.pk }}-quantity" min="0"
+                                    max="{{ row.in_stock }}" class="form-control form-control-sm">
+                                {% else %}
+                                <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <label class="form-label small fw-semibold">Notes to patient (optional)</label>
+            <textarea name="notes" rows="2" class="form-control"
+                placeholder="e.g., Take with food. Complete the full course."></textarea>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'pharmacy:queue' %}" class="btn btn-outline-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check2-all me-1"></i>Dispense &amp; Draw Down Stock
+        </button>
+    </div>
+</form>
+
+{% endblock %}

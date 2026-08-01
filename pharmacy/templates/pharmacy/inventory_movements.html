@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Movements — {{ item.medication.name }} | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="mb-1">
+    <a href="{% url 'pharmacy:inventory_list' %}" class="text-decoration-none text-muted small">
+        <i class="bi bi-arrow-left me-1"></i>Back to inventory
+    </a>
+</div>
+
+<div class="mb-4">
+    <h2 class="mb-1">
+        <i class="bi bi-clock-history text-primary me-2"></i>Stock Movements
+    </h2>
+    <div class="small text-muted">
+        {{ item.medication.name }} &middot; current stock: <strong>{{ item.quantity_on_hand }}</strong>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        {% if item.movements.all %}
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3">Date</th>
+                        <th>Type</th>
+                        <th class="text-end">Change</th>
+                        <th class="text-end">Balance after</th>
+                        <th>Reason / Ref</th>
+                        <th class="pe-3">By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in item.movements.all %}
+                    <tr>
+                        <td class="ps-3 small">{{ m.performed_at|date:"M j, Y g:i A" }}</td>
+                        <td class="small">
+                            {% if m.movement_type == 'RECEIVE' %}
+                            <span class="badge bg-success">Received</span>
+                            {% elif m.movement_type == 'DISPENSE' %}
+                            <span class="badge bg-primary">Dispensed</span>
+                            {% elif m.movement_type == 'ADJUST' %}
+                            <span class="badge bg-warning text-dark">Adjusted</span>
+                            {% elif m.movement_type == 'EXPIRE' %}
+                            <span class="badge bg-danger">Expired</span>
+                            {% elif m.movement_type == 'TRANSFER' %}
+                            <span class="badge bg-secondary">Transferred</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end small
+                                   {% if m.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }}
+                        </td>
+                        <td class="text-end small">{{ m.balance_after }}</td>
+                        <td class="small text-muted">
+                            {% if m.reason %}{{ m.reason }}{% endif %}
+                            {% if m.reference %}<div class="small">Ref: {{ m.reference }}</div>{% endif %}
+                        </td>
+                        <td class="pe-3 small text-muted">
+                            {% if m.performed_by %}
+                            {{ m.performed_by.get_full_name|default:m.performed_by.username }}
+                            {% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 small text-muted">No movements recorded yet.</div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

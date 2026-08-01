@@ -42,21 +42,36 @@ class VitalsInline(admin.StackedInline):
     autocomplete_fields = ("recorded_by",)
     readonly_fields = ("recorded_at", "bp_display", "bmi_display")
     fieldsets = (
-        ("Blood Pressure", {
-            "fields": (("bp_systolic", "bp_diastolic"), "bp_display"),
-        }),
-        ("Cardiovascular / Respiratory", {
-            "fields": ("pulse", "respiratory_rate", "spo2"),
-        }),
-        ("Temperature", {
-            "fields": ("temperature",),
-        }),
-        ("Anthropometrics", {
-            "fields": (("weight_kg", "height_cm"), "bmi_display"),
-        }),
-        ("Audit", {
-            "fields": ("recorded_by", "recorded_at"),
-        }),
+        (
+            "Blood Pressure",
+            {
+                "fields": (("bp_systolic", "bp_diastolic"), "bp_display"),
+            },
+        ),
+        (
+            "Cardiovascular / Respiratory",
+            {
+                "fields": ("pulse", "respiratory_rate", "spo2"),
+            },
+        ),
+        (
+            "Temperature",
+            {
+                "fields": ("temperature",),
+            },
+        ),
+        (
+            "Anthropometrics",
+            {
+                "fields": (("weight_kg", "height_cm"), "bmi_display"),
+            },
+        ),
+        (
+            "Audit",
+            {
+                "fields": ("recorded_by", "recorded_at"),
+            },
+        ),
     )
 
     @admin.display(description="BP")
@@ -99,16 +114,25 @@ class PrescriptionAdmin(admin.ModelAdmin):
     inlines = [PrescriptionItemInline]
 
     fieldsets = (
-        (None, {
-            "fields": ("medical_record", "valid_until", "follow_up_after_days"),
-        }),
-        ("Instructions", {
-            "fields": ("general_instructions",),
-        }),
-        ("Audit", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",),
-        }),
+        (
+            None,
+            {
+                "fields": ("medical_record", "valid_until", "follow_up_after_days"),
+            },
+        ),
+        (
+            "Instructions",
+            {
+                "fields": ("general_instructions",),
+            },
+        ),
+        (
+            "Audit",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
 
@@ -145,30 +169,51 @@ class MedicalRecordAdmin(admin.ModelAdmin):
     inlines = [VitalsInline, DiagnosisInline]
 
     fieldsets = (
-        (None, {
-            "fields": ("appointment", "created_by", ("is_locked", "locked_at")),
-        }),
-        ("Presentation", {
-            "fields": ("chief_complaint", "history_present_illness"),
-        }),
-        ("Examination", {
-            "fields": ("examination_findings",),
-        }),
-        ("Clinical Notes (patient-visible)", {
-            "fields": ("clinical_notes",),
-        }),
-        ("Doctor's Private Notes", {
-            "fields": ("private_notes",),
-            "description": "Never shown to the patient.",
-            "classes": ("collapse",),
-        }),
-        ("Follow-up", {
-            "fields": ("follow_up_recommendation",),
-        }),
-        ("Audit", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",),
-        }),
+        (
+            None,
+            {
+                "fields": ("appointment", "created_by", ("is_locked", "locked_at")),
+            },
+        ),
+        (
+            "Presentation",
+            {
+                "fields": ("chief_complaint", "history_present_illness"),
+            },
+        ),
+        (
+            "Examination",
+            {
+                "fields": ("examination_findings",),
+            },
+        ),
+        (
+            "Clinical Notes (patient-visible)",
+            {
+                "fields": ("clinical_notes",),
+            },
+        ),
+        (
+            "Doctor's Private Notes",
+            {
+                "fields": ("private_notes",),
+                "description": "Never shown to the patient.",
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Follow-up",
+            {
+                "fields": ("follow_up_recommendation",),
+            },
+        ),
+        (
+            "Audit",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
     @admin.display(description="Chief complaint")
