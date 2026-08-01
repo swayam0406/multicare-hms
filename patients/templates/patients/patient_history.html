@@ -142,6 +142,15 @@
                     {% else %}
                     <span class="text-muted small">No prescription</span>
                     {% endif %}
+
+                    {% if mr.prescription and mr.prescription.items.all %}
+                    <div class="mt-2">
+                        <a href="{% url 'medical_records:prescription_pdf' mr.prescription.pk %}"
+                            class="btn btn-outline-danger btn-sm" target="_blank">
+                            <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
 
                 {# ---------- Lab Orders ---------- #}

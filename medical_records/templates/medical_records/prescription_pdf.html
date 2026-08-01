@@ -1,0 +1,160 @@
+{% extends "pdf/base_pdf.html" %}
+
+{% block title %}Prescription — {{ prescription.medical_record.appointment.patient.full_name }}{% endblock %}
+{% block doc_title %}PRESCRIPTION{% endblock %}
+{% block doc_meta %}
+Visit: {{ prescription.medical_record.appointment.scheduled_start|date:"F j, Y" }}<br>
+Issued: {{ prescription.medical_record.appointment.scheduled_start|date:"g:i A" }}
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Patient & Doctor ---------- #}
+<div class="section">
+    <div class="section-title">Patient</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Name</td>
+            <td>
+                <strong>{{ prescription.medical_record.appointment.patient.full_name }}</strong>
+                ({{ prescription.medical_record.appointment.patient.patient_id }})
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Age / Sex</td>
+            <td>
+                {{ prescription.medical_record.appointment.patient.age }} yrs
+                &middot;
+                {{ prescription.medical_record.appointment.patient.get_gender_display }}
+            </td>
+        </tr>
+        {% if prescription.medical_record.appointment.patient.phone %}
+        <tr>
+            <td class="label">Phone</td>
+            <td>{{ prescription.medical_record.appointment.patient.phone }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+<div class="section">
+    <div class="section-title">Consulting Doctor</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Doctor</td>
+            <td>
+                <strong>{{ prescription.medical_record.appointment.doctor.display_name }}</strong><br>
+                <span class="text-muted">
+                    {{ prescription.medical_record.appointment.doctor.qualifications }}
+                    &middot; {{ prescription.medical_record.appointment.doctor.department.name }}
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td class="label">License</td>
+            <td>{{ prescription.medical_record.appointment.doctor.license_number }}</td>
+        </tr>
+    </table>
+</div>
+
+{# ---------- Chief Complaint / Diagnoses ---------- #}
+{% if prescription.medical_record.chief_complaint %}
+<div class="section">
+    <div class="section-title">Chief Complaint</div>
+    <p>{{ prescription.medical_record.chief_complaint }}</p>
+</div>
+{% endif %}
+
+{% if prescription.medical_record.diagnoses.all %}
+<div class="section">
+    <div class="section-title">Diagnoses</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 20%;">Code</th>
+                <th>Condition</th>
+                <th class="text-center" style="width: 15%;">Primary</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dx in prescription.medical_record.diagnoses.all %}
+            <tr>
+                <td>{{ dx.condition.code }}</td>
+                <td>{{ dx.condition.name }}</td>
+                <td class="text-center">
+                    {% if dx.is_primary %}
+                    <span class="badge badge-primary">Primary</span>
+                    {% else %}—{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ---------- Rx ---------- #}
+<div class="section">
+    <div class="section-title">Rx — Medications</div>
+    {% if prescription.items.all %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Medication</th>
+                <th>Dose</th>
+                <th class="text-center">Frequency</th>
+                <th class="text-center">Duration</th>
+                <th>Instructions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in prescription.items.all %}
+            <tr>
+                <td>
+                    <strong>{{ item.medication.name }}</strong>
+                    <span class="text-muted">{{ item.medication.strength }}</span><br>
+                    <span class="text-muted">{{ item.medication.get_form_display }}</span>
+                </td>
+                <td>{{ item.dose }}</td>
+                <td class="text-center">{{ item.get_frequency_display }}</td>
+                <td class="text-center">{{ item.duration_days }} day{{ item.duration_days|pluralize }}</td>
+                <td class="text-muted">{{ item.instructions|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted">No medications prescribed.</p>
+    {% endif %}
+</div>
+
+{# ---------- Follow-up ---------- #}
+{% if prescription.medical_record.follow_up_recommendation %}
+<div class="section">
+    <div class="section-title">Follow-up</div>
+    <p>{{ prescription.medical_record.follow_up_recommendation }}</p>
+</div>
+{% endif %}
+
+{# ---------- Doctor's signature ---------- #}
+<div class="signature-block">
+    <table>
+        <tr>
+            <td></td>
+            <td class="text-end">
+                <div style="margin-bottom: 4px;">
+                    <strong>{{ prescription.medical_record.appointment.doctor.display_name }}</strong>
+                </div>
+                <div class="signature-line" style="margin-left: auto;">
+                    Doctor's signature &amp; seal
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block footer_right %}
+Prescription #{{ prescription.pk }} &middot; Visit {{ prescription.medical_record.appointment.pk }}
+{% endblock %}

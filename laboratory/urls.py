@@ -7,6 +7,7 @@ from .views import (
     LabOrderDetailView,
     LabOrderTransitionView,
     LabQueueView,
+    LabReportPdfView,
     LabResultEntryView,
 )
 
@@ -20,4 +21,5 @@ urlpatterns = [
     path("orders/<int:pk>/", LabOrderDetailView.as_view(), name="order_detail"),
     path("orders/<int:pk>/transition/", LabOrderTransitionView.as_view(), name="order_transition"),
     path("orders/<int:pk>/results/", LabResultEntryView.as_view(), name="result_entry"),
+    path("orders/<int:pk>/pdf/", LabReportPdfView.as_view(), name="lab_report_pdf"),
 ]

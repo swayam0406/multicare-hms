@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Multicare HMS{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="mb-1">
+            <i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard
+        </h2>
+        <span class="text-muted small">
+            Today &middot; {{ today|date:"l, F j, Y" }}
+        </span>
+    </div>
+    <div class="small text-muted">
+        <i class="bi bi-lightning-charge me-1"></i>Refreshes every 60 seconds
+    </div>
+</div>
+
+{# ---------- Appointments ---------- #}
+<div class="mb-4">
+    <h6 class="text-uppercase text-muted small mb-3">
+        <i class="bi bi-calendar-event me-1"></i>Appointments Today
+    </h6>
+    <div class="row g-3">
+        <div class="col-sm-6 col-md-3">
+            <a href="{% url 'appointments:list' %}?quick=today" class="text-decoration-none text-reset">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase">Total</div>
+                        <div class="display-6 fw-bold text-primary">
+                            {{ stats.appointments.total }}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">In progress</div>
+                    <div class="display-6 fw-bold text-info">
+                        {{ stats.appointments.in_progress }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Completed</div>
+                    <div class="display-6 fw-bold text-success">
+                        {{ stats.appointments.completed }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase">Cancelled + No-show</div>
+                    <div class="display-6 fw-bold text-secondary">
+                        {{ stats.appointments.cancelled|add:stats.appointments.no_show }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ---------- Billing + Patients row ---------- #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <h6 class="text-uppercase text-muted small mb-3">
+            <i class="bi bi-cash-coin me-1"></i>Billing
+        </h6>
+        <div class="row g-3">
+            <div class="col-sm-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase">Drafts</div>
+                        <div class="fs-3 fw-bold">{{ stats.billing.drafts }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <a href="{% url 'billing:list' %}?status=FINALIZED" class="text-decoration-none text-reset">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small text-uppercase">Outstanding</div>
+                            <div class="fs-3 fw-bold text-warning">
+                                {{ stats.billing.outstanding }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase">Revenue today</div>
+                        <div class="fs-3 fw-bold text-success">
+                            ₹{{ stats.billing.revenue_today }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <h6 class="text-uppercase text-muted small mb-3">
+            <i class="bi bi-people me-1"></i>Patients
+        </h6>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase">New today</div>
+                        <div class="fs-3 fw-bold text-primary">
+                            {{ stats.patients.new_today }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <a href="{% url 'patients:list' %}" class="text-decoration-none text-reset">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small text-uppercase">Total active</div>
+                            <div class="fs-3 fw-bold">
+                                {{ stats.patients.total_active }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ---------- Lab + Pharmacy row ---------- #}
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <h6 class="text-uppercase text-muted small mb-3">
+            <i class="bi bi-clipboard2-pulse me-1"></i>Laboratory
+        </h6>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase">Orders today</div>
+                        <div class="fs-3 fw-bold text-primary">
+                            {{ stats.lab.orders_today }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <a href="{% url 'laboratory:queue' %}" class="text-decoration-none text-reset">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small text-uppercase">Pending in queue</div>
+                            <div class="fs-3 fw-bold text-warning">
+                                {{ stats.lab.pending }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <h6 class="text-uppercase text-muted small mb-3">
+            <i class="bi bi-capsule me-1"></i>Pharmacy
+        </h6>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="text-muted small text-uppercase">Dispenses today</div>
+                        <div class="fs-3 fw-bold text-success">
+                            {{ stats.pharmacy.dispenses_today }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <a href="{% url 'pharmacy:inventory_list' %}?low=1" class="text-decoration-none text-reset">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-muted small text-uppercase">Low stock items</div>
+                            <div class="fs-3 fw-bold text-danger">
+                                {{ stats.pharmacy.low_stock }}
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

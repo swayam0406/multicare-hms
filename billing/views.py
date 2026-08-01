@@ -4,6 +4,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import Prefetch, Q, Sum
 from django.shortcuts import get_object_or_404, redirect
@@ -372,3 +373,46 @@ class InsuranceClaimAddView(BillActionMixin):
             f"Insurance claim filed with {provider} for ₹{amount_claimed}.",
         )
         return self.redirect_to_detail(bill)
+
+
+class BillPdfView(LoginRequiredMixin, DetailView):
+    """Render a bill as a downloadable PDF.
+
+    Access:
+      - Staff (any non-PATIENT role)
+      - Patient users viewing their own bill
+    """
+
+    model = Bill
+    slug_field = "bill_number"
+    slug_url_kwarg = "bill_number"
+
+    def get_queryset(self):
+        return Bill.objects.select_related(
+            "patient",
+            "appointment__doctor__user",
+            "appointment__doctor__department",
+        ).prefetch_related("items__service", "payments")
+
+    def get(self, request, *args, **kwargs):
+        bill = self.get_object()
+
+        # Access check
+        user = request.user
+        is_own_bill = (
+            user.role == "PATIENT"
+            and hasattr(user, "patient_profile")
+            and user.patient_profile.pk == bill.patient_id
+        )
+        if not (user.role != "PATIENT" or is_own_bill):
+            from django.core.exceptions import PermissionDenied
+
+            raise PermissionDenied("You can only download your own bills.")
+
+        from common.pdf_utils import render_pdf
+
+        return render_pdf(
+            "billing/bill_pdf.html",
+            {"bill": bill},
+            f"bill-{bill.bill_number}.pdf",
+        )

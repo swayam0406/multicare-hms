@@ -8,6 +8,7 @@ from .views import (
     BillItemAddView,
     BillItemDeleteView,
     BillListView,
+    BillPdfView,
     InsuranceClaimAddView,
     PaymentAddView,
 )
@@ -26,4 +27,6 @@ urlpatterns = [
     path("<str:bill_number>/finalize/", BillFinalizeView.as_view(), name="finalize"),
     path("<str:bill_number>/payments/add/", PaymentAddView.as_view(), name="payment_add"),
     path("<str:bill_number>/insurance/add/", InsuranceClaimAddView.as_view(), name="insurance_add"),
+    path("<str:bill_number>/", BillDetailView.as_view(), name="detail"),
+    path("<str:bill_number>/pdf/", BillPdfView.as_view(), name="bill_pdf"),
 ]

@@ -1,0 +1,186 @@
+{% extends "pdf/base_pdf.html" %}
+
+{% block title %}{{ bill.bill_number }}{% endblock %}
+{% block doc_title %}INVOICE{% endblock %}
+{% block doc_meta %}
+<strong>{{ bill.bill_number }}</strong><br>
+Issued: {{ bill.created_at|date:"F j, Y" }}
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Patient + Visit ---------- #}
+<div class="section">
+    <div class="section-title">Patient & Visit</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Patient</td>
+            <td>
+                <strong>{{ bill.patient.full_name }}</strong>
+                ({{ bill.patient.patient_id }})<br>
+                {{ bill.patient.age }} yrs &middot; {{ bill.patient.get_gender_display }}<br>
+                {% if bill.patient.phone %}Phone: {{ bill.patient.phone }}<br>{% endif %}
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Doctor</td>
+            <td>
+                {{ bill.appointment.doctor.display_name }}<br>
+                <span class="text-muted">{{ bill.appointment.doctor.department.name }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Visit Date</td>
+            <td>{{ bill.appointment.scheduled_start|date:"F j, Y g:i A" }}</td>
+        </tr>
+        <tr>
+            <td class="label">Status</td>
+            <td>
+                {% if bill.status == 'DRAFT' %}
+                <span class="badge badge-secondary">Draft</span>
+                {% elif bill.status == 'FINALIZED' %}
+                <span class="badge badge-primary">Finalized</span>
+                {% elif bill.status == 'PARTIAL' %}
+                <span class="badge badge-warning">Partially Paid</span>
+                {% elif bill.status == 'PAID' %}
+                <span class="badge badge-success">Paid</span>
+                {% elif bill.status == 'CLOSED' %}
+                <span class="badge badge-secondary">Closed</span>
+                {% elif bill.status == 'CANCELLED' %}
+                <span class="badge badge-danger">Cancelled</span>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+</div>
+
+{# ---------- Line items ---------- #}
+<div class="section">
+    <div class="section-title">Services &amp; Items</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Unit price</th>
+                <th class="text-end">Line total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in bill.items.all %}
+            <tr>
+                <td>
+                    {{ item.display_name }}<br>
+                    <span class="text-muted">{{ item.service.code }} &middot; {{ item.service.get_category_display
+                        }}</span>
+                </td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end">Rs. {{ item.unit_price }}</td>
+                <td class="text-end">Rs. {{ item.line_total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end">Subtotal</td>
+                <td class="text-end">Rs. {{ bill.subtotal }}</td>
+            </tr>
+            {% if bill.discount_amount %}
+            <tr>
+                <td colspan="3" class="text-end">Discount</td>
+                <td class="text-end">- Rs. {{ bill.discount_amount }}</td>
+            </tr>
+            {% endif %}
+            {% if bill.tax_amount %}
+            <tr>
+                <td colspan="3" class="text-end">Tax ({{ bill.tax_rate }}%)</td>
+                <td class="text-end">Rs. {{ bill.tax_amount }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td colspan="3" class="text-end">TOTAL</td>
+                <td class="text-end">Rs. {{ bill.total }}</td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+{# ---------- Payments ---------- #}
+{% if bill.payments.all %}
+<div class="section">
+    <div class="section-title">Payments</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Method</th>
+                <th>Reference</th>
+                <th>Status</th>
+                <th class="text-end">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in bill.payments.all %}
+            <tr>
+                <td>{{ payment.received_at|date:"M j, Y" }}</td>
+                <td>{{ payment.get_method_display }}</td>
+                <td class="text-muted">{{ payment.reference|default:"-" }}</td>
+                <td>
+                    {% if payment.status == 'COMPLETED' %}
+                    <span class="badge badge-success">Completed</span>
+                    {% elif payment.status == 'PENDING' %}
+                    <span class="badge badge-warning">Pending</span>
+                    {% elif payment.status == 'FAILED' %}
+                    <span class="badge badge-danger">Failed</span>
+                    {% elif payment.status == 'REFUNDED' %}
+                    <span class="badge badge-secondary">Refunded</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">Rs. {{ payment.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{# ---------- Balance summary ---------- #}
+<div class="section">
+    <div class="section-title">Balance</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Total billed</td>
+            <td class="text-end fw-bold">Rs. {{ bill.total }}</td>
+        </tr>
+        <tr>
+            <td class="label">Total paid</td>
+            <td class="text-end">Rs. {{ bill.paid_amount }}</td>
+        </tr>
+        <tr>
+            <td class="label"><strong>Outstanding balance</strong></td>
+            <td class="text-end fw-bold">Rs. {{ bill.balance }}</td>
+        </tr>
+    </table>
+</div>
+
+{# ---------- Signature ---------- #}
+<div class="signature-block">
+    <table>
+        <tr>
+            <td>
+                <div class="signature-line">Authorized signature (Billing)</div>
+            </td>
+            <td class="text-end">
+                <div class="signature-line" style="margin-left: auto;">
+                    Patient acknowledgement
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{% endblock %}
+
+{% block footer_right %}
+Bill number: {{ bill.bill_number }}
+{% endblock %}

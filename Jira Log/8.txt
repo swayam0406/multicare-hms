@@ -1,0 +1,48 @@
+Epic: EPIC-7 Production Readiness
+Sprint: Sprint 8 - Polish, PDFs & Production Readiness
+Duration: 1 iteration
+Story Points: 21 planned / 18 delivered (T-8.9 deferred)
+Velocity: 18
+Cumulative: 135 SP
+
+Stories:
+  - key: HMS-57
+    summary: Password reset via email
+    story_points: 3
+    status: Done
+  - key: HMS-58
+    summary: Download bill as PDF
+    story_points: 3
+    status: Done
+  - key: HMS-59
+    summary: Download prescription as PDF
+    story_points: 2
+    status: Done
+  - key: HMS-60
+    summary: Download lab report as PDF
+    story_points: 2
+    status: Done
+  - key: HMS-61
+    summary: Admin creates users via UI
+    story_points: 2
+    status: Done
+  - key: HMS-62
+    summary: coverage.py wired up
+    story_points: 1
+    status: Done
+  - key: HMS-63
+    summary: Backfill Sprint 4-5 missing tests
+    story_points: 3
+    status: Done
+  - key: HMS-64
+    summary: In-app notifications
+    story_points: 3
+    status: Deferred - requires delivery channel
+  - key: HMS-65
+    summary: Cached navbar counters
+    story_points: 1
+    status: Done
+  - key: HMS-66
+    summary: Admin dashboard
+    story_points: 1
+    status: Done

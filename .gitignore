@@ -161,3 +161,7 @@ coverage.xml
 
 # -------- OS --------
 desktop.ini
+
+# Coverage.py
+.coverage
+htmlcov/

@@ -96,3 +96,19 @@ multicare-hms/
 ## 📜 License
 
 For educational and portfolio purposes.
+
+## Running Tests
+
+```powershell
+python manage.py test
+```
+
+## Measuring Coverage
+
+```powershell
+coverage run manage.py test
+coverage report
+coverage html   # opens htmlcov/index.html
+```
+
+Current coverage: **~XX%** (run `coverage report` to update).

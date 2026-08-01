@@ -1,9 +1,11 @@
 """Views for the medical_records app."""
 
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.shortcuts import redirect, render
 from django.views import View
+from django.views.generic import DetailView
 
 from billing.models import ServiceCatalog
 from laboratory.models import LabOrder
@@ -195,3 +197,57 @@ class ConsultationView(ConsultationAccessMixin, View):
             "lab_services": lab_services,
             "visit_lab_orders": visit_lab_orders,
         }
+
+
+class PrescriptionPdfView(LoginRequiredMixin, DetailView):
+    """Render a prescription as a downloadable PDF.
+
+    Access:
+      - Owning doctor
+      - Admin
+      - Patient owning the prescription
+    """
+
+    model = Prescription
+    pk_url_kwarg = "pk"
+
+    def get_queryset(self):
+        return Prescription.objects.select_related(
+            "medical_record__appointment__patient",
+            "medical_record__appointment__doctor__user",
+            "medical_record__appointment__doctor__department",
+        ).prefetch_related(
+            "items__medication",
+            "medical_record__diagnoses__condition",
+        )
+
+    def get(self, request, *args, **kwargs):
+        from django.core.exceptions import PermissionDenied
+
+        from common.pdf_utils import render_pdf
+
+        prescription = self.get_object()
+        appt = prescription.medical_record.appointment
+        user = request.user
+
+        is_owning_doctor = (
+            user.role == "DOCTOR"
+            and hasattr(user, "doctor_profile")
+            and appt.doctor_id == user.doctor_profile.pk
+        )
+        is_owning_patient = (
+            user.role == "PATIENT"
+            and hasattr(user, "patient_profile")
+            and appt.patient_id == user.patient_profile.pk
+        )
+
+        if not (user.is_admin or is_owning_doctor or is_owning_patient):
+            raise PermissionDenied("You do not have access to this prescription.")
+
+        date_str = appt.scheduled_start.strftime("%Y-%m-%d")
+        filename = f"prescription-{date_str}-{appt.patient.patient_id}.pdf"
+        return render_pdf(
+            "medical_records/prescription_pdf.html",
+            {"prescription": prescription},
+            filename,
+        )

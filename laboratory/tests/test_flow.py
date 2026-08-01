@@ -29,61 +29,84 @@ class LabFlowSetup(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="lf_doc", email="lfd@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="lf_doc",
+            email="lfd@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="LF-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="LF-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="lf_staff", email="lfs@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="lf_staff",
+            email="lfs@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.admin = User.objects.create_user(
-            username="lf_admin", email="lfa@t.local",
-            password="pass1234", role=User.Role.ADMIN,
+            username="lf_admin",
+            email="lfa@t.local",
+            password="pass1234",
+            role=User.Role.ADMIN,
         )
         cls.tech = User.objects.create_user(
-            username="lf_tech", email="lft@t.local",
-            password="pass1234", role="LAB_TECH",
+            username="lf_tech",
+            email="lft@t.local",
+            password="pass1234",
+            role="LAB_TECH",
         )
         cls.pat = User.objects.create_user(
-            username="lf_pat", email="lfp@t.local",
-            password="pass1234", role=User.Role.PATIENT,
+            username="lf_pat",
+            email="lfp@t.local",
+            password="pass1234",
+            role=User.Role.PATIENT,
         )
         cls.patient = Patient.objects.create(
-            first_name="P", last_name="One",
+            first_name="P",
+            last_name="One",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543210",
+            gender=Patient.Gender.MALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
         monday = _next_weekday(0)
         cls.appt = Appointment.objects.create(
-            patient=cls.patient, doctor=cls.doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(monday, time(10, 0))
-            ),
-            reason="Test", booked_by=cls.staff,
+            patient=cls.patient,
+            doctor=cls.doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(monday, time(10, 0))),
+            reason="Test",
+            booked_by=cls.staff,
             status="IN_PROGRESS",
         )
         cls.mr = MedicalRecord.objects.create(appointment=cls.appt)
 
         cls.cbc_svc = ServiceCatalog.objects.create(
-            code="LAB-CBC", name="CBC",
-            category="LABORATORY", default_price=Decimal("350.00"),
+            code="LAB-CBC",
+            name="CBC",
+            category="LABORATORY",
+            default_price=Decimal("350.00"),
         )
         cls.dengue_svc = ServiceCatalog.objects.create(
-            code="LAB-DENGUE", name="Dengue NS1",
-            category="LABORATORY", default_price=Decimal("900.00"),
+            code="LAB-DENGUE",
+            name="Dengue NS1",
+            category="LABORATORY",
+            default_price=Decimal("900.00"),
         )
         LabTestProfile.objects.create(
-            service=cls.cbc_svc, sample_type="BLOOD", unit="cells/µL",
+            service=cls.cbc_svc,
+            sample_type="BLOOD",
+            unit="cells/µL",
         )
 
 
@@ -93,10 +116,13 @@ class LabOrderCreateTests(LabFlowSetup):
 
     def test_doctor_can_create_order(self):
         self.client.login(username="lf_doc", password="pass1234")
-        response = self.client.post(self._url(), {
-            "services": [self.cbc_svc.pk, self.dengue_svc.pk],
-            "clinical_notes": "Rule out dengue",
-        })
+        response = self.client.post(
+            self._url(),
+            {
+                "services": [self.cbc_svc.pk, self.dengue_svc.pk],
+                "clinical_notes": "Rule out dengue",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(LabOrder.objects.count(), 1)
         order = LabOrder.objects.first()
@@ -105,21 +131,29 @@ class LabOrderCreateTests(LabFlowSetup):
 
     def test_admin_can_create_order(self):
         self.client.login(username="lf_admin", password="pass1234")
-        response = self.client.post(self._url(), {
-            "services": [self.cbc_svc.pk],
-        })
+        response = self.client.post(
+            self._url(),
+            {
+                "services": [self.cbc_svc.pk],
+            },
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(LabOrder.objects.count(), 1)
 
     def test_other_doctor_forbidden(self):
         other_doc_user = User.objects.create_user(
-            username="lf_other", email="lfo@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="lf_other",
+            email="lfo@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         Doctor.objects.create(
-            user=other_doc_user, department=self.dept,
-            license_number="LF-2", specialty="y",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=other_doc_user,
+            department=self.dept,
+            license_number="LF-2",
+            specialty="y",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         self.client.login(username="lf_other", password="pass1234")
         response = self.client.post(self._url(), {"services": [self.cbc_svc.pk]})
@@ -138,8 +172,10 @@ class LabOrderCreateTests(LabFlowSetup):
 
     def test_rejects_non_lab_service(self):
         cons = ServiceCatalog.objects.create(
-            code="CONS-GEN", name="Consultation",
-            category="CONSULTATION", default_price=Decimal("500.00"),
+            code="CONS-GEN",
+            name="Consultation",
+            category="CONSULTATION",
+            default_price=Decimal("500.00"),
         )
         self.client.login(username="lf_doc", password="pass1234")
         self.client.post(self._url(), {"services": [cons.pk]})
@@ -179,14 +215,17 @@ class QueueAccessTests(LabFlowSetup):
 
     def test_queue_excludes_terminal_orders(self):
         active = LabOrder.objects.create(
-            medical_record=self.mr, patient=self.patient,
+            medical_record=self.mr,
+            patient=self.patient,
         )
         LabOrder.objects.create(
-            medical_record=self.mr, patient=self.patient,
+            medical_record=self.mr,
+            patient=self.patient,
             status="COMPLETED",
         )
         LabOrder.objects.create(
-            medical_record=self.mr, patient=self.patient,
+            medical_record=self.mr,
+            patient=self.patient,
             status="CANCELLED",
         )
         self.client.login(username="lf_tech", password="pass1234")
@@ -198,13 +237,16 @@ class QueueAccessTests(LabFlowSetup):
 class ResultEntryTests(LabFlowSetup):
     def setUp(self):
         self.order = LabOrder.objects.create(
-            medical_record=self.mr, patient=self.patient,
+            medical_record=self.mr,
+            patient=self.patient,
         )
         self.cbc_item = LabOrderItem.objects.create(
-            order=self.order, service=self.cbc_svc,
+            order=self.order,
+            service=self.cbc_svc,
         )
         self.dengue_item = LabOrderItem.objects.create(
-            order=self.order, service=self.dengue_svc,
+            order=self.order,
+            service=self.dengue_svc,
         )
 
     def _url(self):
@@ -212,11 +254,14 @@ class ResultEntryTests(LabFlowSetup):
 
     def test_tech_saves_results(self):
         self.client.login(username="lf_tech", password="pass1234")
-        response = self.client.post(self._url(), {
-            f"item-{self.cbc_item.pk}-result_value": "5.4",
-            f"item-{self.cbc_item.pk}-is_abnormal": "on",
-            f"item-{self.dengue_item.pk}-result_value": "Negative",
-        })
+        response = self.client.post(
+            self._url(),
+            {
+                f"item-{self.cbc_item.pk}-result_value": "5.4",
+                f"item-{self.cbc_item.pk}-is_abnormal": "on",
+                f"item-{self.dengue_item.pk}-result_value": "Negative",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         self.cbc_item.refresh_from_db()
         self.dengue_item.refresh_from_db()
@@ -226,17 +271,23 @@ class ResultEntryTests(LabFlowSetup):
 
     def test_result_entry_auto_advances_to_in_progress(self):
         self.client.login(username="lf_tech", password="pass1234")
-        self.client.post(self._url(), {
-            f"item-{self.cbc_item.pk}-result_value": "5.4",
-        })
+        self.client.post(
+            self._url(),
+            {
+                f"item-{self.cbc_item.pk}-result_value": "5.4",
+            },
+        )
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, "IN_PROGRESS")
 
     def test_result_entry_records_resulted_by(self):
         self.client.login(username="lf_tech", password="pass1234")
-        self.client.post(self._url(), {
-            f"item-{self.cbc_item.pk}-result_value": "5.4",
-        })
+        self.client.post(
+            self._url(),
+            {
+                f"item-{self.cbc_item.pk}-result_value": "5.4",
+            },
+        )
         self.cbc_item.refresh_from_db()
         self.assertEqual(self.cbc_item.resulted_by, self.tech)
         self.assertIsNotNone(self.cbc_item.resulted_at)
@@ -245,9 +296,12 @@ class ResultEntryTests(LabFlowSetup):
         self.order.status = "COMPLETED"
         self.order.save()
         self.client.login(username="lf_tech", password="pass1234")
-        response = self.client.post(self._url(), {
-            f"item-{self.cbc_item.pk}-result_value": "changed",
-        })
+        response = self.client.post(
+            self._url(),
+            {
+                f"item-{self.cbc_item.pk}-result_value": "changed",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         self.cbc_item.refresh_from_db()
         self.assertEqual(self.cbc_item.result_value, "")
@@ -258,18 +312,22 @@ class TransitionTests(LabFlowSetup):
         # Create a bill so the auto-billing signal has somewhere to append.
         self.bill = Bill.objects.create(appointment=self.appt, patient=self.patient)
         cons_svc = ServiceCatalog.objects.create(
-            code="CONS-GEN", name="Consultation",
-            category="CONSULTATION", default_price=Decimal("500.00"),
+            code="CONS-GEN",
+            name="Consultation",
+            category="CONSULTATION",
+            default_price=Decimal("500.00"),
         )
         BillItem.objects.create(bill=self.bill, service=cons_svc, quantity=1)
         self.bill.refresh_from_db()
         self.bill.finalize()
 
         self.order = LabOrder.objects.create(
-            medical_record=self.mr, patient=self.patient,
+            medical_record=self.mr,
+            patient=self.patient,
         )
         self.item = LabOrderItem.objects.create(
-            order=self.order, service=self.cbc_svc,
+            order=self.order,
+            service=self.cbc_svc,
             result_value="5.4",  # has a result — completion allowed
         )
 
@@ -317,10 +375,13 @@ class TransitionTests(LabFlowSetup):
 
     def test_cancel_with_reason(self):
         self.client.login(username="lf_tech", password="pass1234")
-        self.client.post(self._url(), {
-            "new_status": "CANCELLED",
-            "cancelled_reason": "Sample hemolyzed",
-        })
+        self.client.post(
+            self._url(),
+            {
+                "new_status": "CANCELLED",
+                "cancelled_reason": "Sample hemolyzed",
+            },
+        )
         self.order.refresh_from_db()
         self.assertEqual(self.order.status, "CANCELLED")
         self.assertEqual(self.order.cancelled_reason, "Sample hemolyzed")

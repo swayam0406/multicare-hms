@@ -1,7 +1,6 @@
 # Create your views here.
 """Views for the laboratory app."""
 
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -278,3 +277,59 @@ class LabResultEntryView(LabTechOrAdminMixin, View):
             messages.info(request, "No changes to save.")
 
         return redirect("laboratory:order_detail", pk=order.pk)
+
+
+class LabReportPdfView(LoginRequiredMixin, DetailView):
+    """Render a completed lab order as a downloadable PDF.
+
+    Access:
+      - Owning doctor
+      - Admin
+      - Lab technician
+      - Patient owning the order (COMPLETED only)
+    """
+
+    model = LabOrder
+    pk_url_kwarg = "pk"
+
+    def get_queryset(self):
+        return LabOrder.objects.select_related(
+            "patient",
+            "medical_record__appointment__doctor__user",
+            "medical_record__appointment__doctor__department",
+        ).prefetch_related(
+            "items__service__lab_profile",
+            "items__resulted_by",
+        )
+
+    def get(self, request, *args, **kwargs):
+        from common.pdf_utils import render_pdf
+
+        order = self.get_object()
+        user = request.user
+
+        # Only completed orders may be printed
+        if order.status != "COMPLETED":
+            raise PermissionDenied("Lab reports are available only for completed orders.")
+
+        is_owning_doctor = (
+            user.role == "DOCTOR"
+            and hasattr(user, "doctor_profile")
+            and order.medical_record.appointment.doctor_id == user.doctor_profile.pk
+        )
+        is_owning_patient = (
+            user.role == "PATIENT"
+            and hasattr(user, "patient_profile")
+            and order.patient_id == user.patient_profile.pk
+        )
+        is_lab_tech = getattr(user, "role", None) == "LAB_TECH"
+
+        if not (user.is_admin or is_owning_doctor or is_owning_patient or is_lab_tech):
+            raise PermissionDenied("You do not have access to this lab report.")
+
+        filename = f"lab-{order.order_number}.pdf"
+        return render_pdf(
+            "laboratory/lab_report_pdf.html",
+            {"order": order},
+            filename,
+        )

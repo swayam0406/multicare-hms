@@ -278,6 +278,15 @@
         {% endif %}
     </div>
 </form>
+{# ---------- T-8.4: Download prescription PDF ---------- #}
+{% if rx_form.instance.pk %}
+<div class="text-end mb-3">
+    <a href="{% url 'medical_records:prescription_pdf' rx_form.instance.pk %}" class="btn btn-outline-danger btn-sm"
+        target="_blank">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Download Prescription PDF
+    </a>
+</div>
+{% endif %}
 {# ---------- T-7.3: Order Lab Tests ---------- #}
 {% if appointment.status == 'IN_PROGRESS' %}
 <div class="text-end mt-3 mb-4">

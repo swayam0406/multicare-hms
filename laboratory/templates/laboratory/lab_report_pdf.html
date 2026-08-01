@@ -1,0 +1,145 @@
+{% extends "pdf/base_pdf.html" %}
+
+{% block title %}Lab Report — {{ order.order_number }}{% endblock %}
+{% block doc_title %}LAB REPORT{% endblock %}
+{% block doc_meta %}
+<strong>{{ order.order_number }}</strong><br>
+Completed: {{ order.completed_at|date:"F j, Y g:i A" }}
+{% endblock %}
+
+{% block content %}
+
+{# ---------- Patient ---------- #}
+<div class="section">
+    <div class="section-title">Patient</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Name</td>
+            <td>
+                <strong>{{ order.patient.full_name }}</strong>
+                ({{ order.patient.patient_id }})
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Age / Sex</td>
+            <td>{{ order.patient.age }} yrs &middot; {{ order.patient.get_gender_display }}</td>
+        </tr>
+        {% if order.patient.phone %}
+        <tr>
+            <td class="label">Phone</td>
+            <td>{{ order.patient.phone }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+{# ---------- Ordering doctor ---------- #}
+<div class="section">
+    <div class="section-title">Referring Doctor</div>
+    <table class="info-table">
+        <tr>
+            <td class="label">Doctor</td>
+            <td>
+                <strong>{{ order.medical_record.appointment.doctor.display_name }}</strong><br>
+                <span class="text-muted">{{ order.medical_record.appointment.doctor.department.name }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="label">Order date</td>
+            <td>{{ order.created_at|date:"F j, Y g:i A" }}</td>
+        </tr>
+        {% if order.clinical_notes %}
+        <tr>
+            <td class="label">Clinical notes</td>
+            <td>{{ order.clinical_notes }}</td>
+        </tr>
+        {% endif %}
+    </table>
+</div>
+
+{# ---------- Results ---------- #}
+<div class="section">
+    <div class="section-title">Test Results</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Test</th>
+                <th>Sample</th>
+                <th>Result</th>
+                <th>Reference range</th>
+                <th class="text-center">Flag</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items.all %}
+            <tr>
+                <td>
+                    <strong>{{ item.service.name }}</strong><br>
+                    <span class="text-muted">{{ item.service.code }}</span>
+                </td>
+                <td>
+                    {% if item.service.lab_profile %}
+                    {{ item.service.lab_profile.get_sample_type_display }}
+                    {% else %}—{% endif %}
+                </td>
+                <td>
+                    {% if item.result_value %}
+                    <strong>{{ item.result_value }}</strong>
+                    {% if item.result_unit %} {{ item.result_unit }}{% endif %}
+                    {% else %}
+                    <span class="text-muted">Pending</span>
+                    {% endif %}
+                    {% if item.result_notes %}
+                    <br><span class="text-muted">{{ item.result_notes }}</span>
+                    {% endif %}
+                </td>
+                <td class="text-muted">{{ item.reference_range|default:"—" }}</td>
+                <td class="text-center">
+                    {% if item.is_abnormal %}
+                    <span class="badge badge-danger">Abnormal</span>
+                    {% else %}
+                    <span class="badge badge-success">Normal</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{# ---------- Sign-off ---------- #}
+<div class="signature-block">
+    <table>
+        <tr>
+            <td>
+                {% if order.items.all.0.resulted_by %}
+                <div style="margin-bottom: 4px;">
+                    <strong>
+                        {{ order.items.all.0.resulted_by.get_full_name|default:order.items.all.0.resulted_by.username }}
+                    </strong>
+                </div>
+                {% endif %}
+                <div class="signature-line">Reported by (Lab Technician)</div>
+            </td>
+            <td class="text-end">
+                <div style="margin-bottom: 4px;">
+                    <strong>{{ order.medical_record.appointment.doctor.display_name }}</strong>
+                </div>
+                <div class="signature-line" style="margin-left: auto;">
+                    Reviewing physician
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="section" style="margin-top: 20px; font-size: 8pt; color: #6c757d;">
+    <strong>Disclaimer:</strong> These results are subject to laboratory reference range interpretation and
+    should be correlated with clinical findings. Consult your physician for interpretation.
+</div>
+
+{% endblock %}
+
+{% block footer_right %}
+Report: {{ order.order_number }}
+{% endblock %}

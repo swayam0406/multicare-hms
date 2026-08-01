@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Multicare HMS Document{% endblock %}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm 1.5cm;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #212529;
+            line-height: 1.4;
+        }
+
+        .header {
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header .hospital-name {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+
+        .header .hospital-sub {
+            font-size: 9pt;
+            color: #6c757d;
+        }
+
+        .doc-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        .doc-meta {
+            font-size: 9pt;
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            padding: 3px 6px;
+            font-size: 9pt;
+        }
+
+        .info-table .label {
+            color: #6c757d;
+            font-weight: normal;
+            width: 25%;
+        }
+
+        .data-table th {
+            background-color: #e9ecef;
+            text-align: left;
+            padding: 6px 8px;
+            font-size: 9pt;
+            border-bottom: 1px solid #adb5bd;
+        }
+
+        .data-table td {
+            padding: 6px 8px;
+            font-size: 9pt;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .data-table .text-end {
+            text-align: right;
+        }
+
+        .data-table .text-center {
+            text-align: center;
+        }
+
+        .data-table tfoot td {
+            font-weight: bold;
+            background-color: #f8f9fa;
+            border-top: 1px solid #adb5bd;
+        }
+
+        .section {
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 11pt;
+            font-weight: bold;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 3px;
+            margin-bottom: 8px;
+            color: #0d6efd;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background-color: #d1e7dd;
+            color: #0f5132;
+        }
+
+        .badge-warning {
+            background-color: #fff3cd;
+            color: #664d03;
+        }
+
+        .badge-primary {
+            background-color: #cfe2ff;
+            color: #0a58ca;
+        }
+
+        .badge-secondary {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+
+        .badge-danger {
+            background-color: #f8d7da;
+            color: #842029;
+        }
+
+        .footer {
+            margin-top: 40px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            font-size: 8pt;
+            color: #6c757d;
+        }
+
+        .signature-block {
+            margin-top: 40px;
+        }
+
+        .signature-line {
+            border-top: 1px solid #212529;
+            width: 200px;
+            padding-top: 3px;
+            font-size: 8pt;
+            color: #6c757d;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-muted {
+            color: #6c757d;
+        }
+
+        .fw-bold {
+            font-weight: bold;
+        }
+
+        .mt-2 {
+            margin-top: 8px;
+        }
+
+        .mb-2 {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <table>
+            <tr>
+                <td>
+                    <div class="hospital-name">Multicare Hospital</div>
+                    <div class="hospital-sub">
+                        123 Care Street &middot; Bhubaneswar, Odisha 751001<br>
+                        Phone: +91-674-XXX-XXXX &middot; Email: care@multicare.local
+                    </div>
+                </td>
+                <td class="text-end">
+                    <div class="doc-title">{% block doc_title %}Document{% endblock %}</div>
+                    <div class="doc-meta">{% block doc_meta %}{% endblock %}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    {% block content %}{% endblock %}
+
+    <div class="footer">
+        <table>
+            <tr>
+                <td>
+                    Generated on {% now "F j, Y g:i A" %} &middot;
+                    Multicare HMS
+                </td>
+                <td class="text-end">
+                    {% block footer_right %}{% endblock %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</body>
+
+</html>

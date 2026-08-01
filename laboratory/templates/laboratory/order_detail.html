@@ -169,6 +169,12 @@
             </div>
             <div class="card-body">
                 {% if order.is_terminal %}
+                {% if order.status == 'COMPLETED' %}
+                <a href="{% url 'laboratory:lab_report_pdf' order.pk %}" class="btn btn-outline-danger w-100 mb-2"
+                    target="_blank">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Download Report PDF
+                </a>
+                {% endif %}
                 <p class="text-muted small mb-0">This order is finalized. No further transitions.</p>
                 {% else %}
                 {% if 'SAMPLE_COLLECTED' in order.available_transitions %}

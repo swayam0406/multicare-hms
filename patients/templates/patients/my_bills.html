@@ -80,7 +80,8 @@
                         <th class="text-end">Total</th>
                         <th class="text-end">Paid</th>
                         <th class="text-end">Balance</th>
-                        <th class="pe-3">Status</th>
+                        <th>Status</th>
+                        <th class="pe-3"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,6 +112,12 @@
                             {% elif bill.status == 'CANCELLED' %}
                             <span class="badge bg-danger">Cancelled</span>
                             {% endif %}
+                        </td>
+                        <td class="pe-3">
+                            <a href="{% url 'billing:bill_pdf' bill.bill_number %}"
+                                class="btn btn-sm btn-outline-danger" target="_blank" title="Download PDF">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}

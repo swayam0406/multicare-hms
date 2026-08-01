@@ -1,0 +1,37 @@
+[run]
+source = .
+branch = True
+omit =
+    */migrations/*
+    */tests/*
+    */venv/*
+    */staticfiles/*
+    */management/commands/*
+    manage.py
+    multicare_hms/asgi.py
+    multicare_hms/wsgi.py
+    multicare_hms/settings.py
+    */admin.py
+    */apps.py
+    */__init__.py
+    */urls.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __str__
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    # Late imports
+    from django.utils import timezone
+
+precision = 1
+show_missing = True
+skip_covered = False
+sort = -Cover
+
+[html]
+directory = htmlcov
+title = Multicare HMS — Test Coverage

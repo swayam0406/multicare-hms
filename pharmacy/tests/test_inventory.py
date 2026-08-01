@@ -209,8 +209,14 @@ class LowStockQuerysetTests(TestCase):
 
 
 class LowStockTemplateTagTests(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+
     def _render(self):
-        template = Template("{% load pharmacy_tags %}{% low_stock_count %}")
+        template = Template(
+            "{% load pharmacy_tags %}{% low_stock_count %}"
+        )
         return template.render(Context({})).strip()
 
     def test_zero_when_no_inventory(self):

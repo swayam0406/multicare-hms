@@ -220,4 +220,34 @@ LOGGING = {
             "propagate": False,
         },
     },
+
 }
+# ---------- Email (Sprint 8 T-8.1) ----------
+# Dev: prints reset emails to the console.
+# Production: replace with SMTP settings below.
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "no-reply@multicare-hms.local"
+
+# --- Production SMTP (uncomment + fill in) ---
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# EMAIL_HOST = "smtp.yourhost.com"
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = "user"
+# EMAIL_HOST_PASSWORD = "pass"
+
+# ---------- Cache (Sprint 8 T-8.10) ----------
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "multicare-hms-default",
+    },
+}
+
+# In production, swap for Redis:
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.redis.RedisCache",
+#         "LOCATION": "redis://127.0.0.1:6379",
+#     },
+# }
