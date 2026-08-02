@@ -88,7 +88,11 @@
                         </thead>
                         <tbody>
                             {% for item in order.items.all %}
-                            <tr {% if item.is_abnormal %}class="table-danger" {% endif %}>
+                            {% if item.is_abnormal %}
+                            <tr class="table-danger">
+                                {% else %}
+                            <tr>
+                                {% endif %}
                                 <td class="ps-3 small">{{ item.service.name }}</td>
                                 <td class="small">
                                     <strong>{{ item.result_display }}</strong>
@@ -137,9 +141,13 @@
                                     <td class="small text-muted">{{ item.result_unit|default:"—" }}</td>
                                     <td class="small text-muted">{{ item.reference_range|default:"—" }}</td>
                                     <td class="text-center">
+                                        {% if item.is_abnormal %}
                                         <input type="checkbox" class="form-check-input"
-                                            name="item-{{ item.pk }}-is_abnormal" {% if item.is_abnormal %}checked{%
-                                            endif %}>
+                                            name="item-{{ item.pk }}-is_abnormal" checked>
+                                        {% else %}
+                                        <input type="checkbox" class="form-check-input"
+                                            name="item-{{ item.pk }}-is_abnormal">
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <input type="text" name="item-{{ item.pk }}-result_notes"
