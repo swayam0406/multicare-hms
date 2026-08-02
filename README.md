@@ -1,114 +1,130 @@
-# 🏥 Multicare Hospital Management System (HMS)
+# Multicare HMS
 
-An enterprise-grade Hospital Management System built with Django, PostgreSQL, and Bootstrap 5.
-Developed incrementally using Agile Scrum methodology.
+A production-shaped hospital management system covering the full clinical operations lifecycle — patient registration, appointments, EMR, billing, laboratory, and pharmacy — built with Django 5.2 and PostgreSQL over 8 iterative sprints.
 
-## 📋 Project Status
+**135 story points · 316 passing tests · 8 sprint commits.**
 
-**Current Sprint:** Sprint 1 — Environment Setup
-**Version:** 0.1.0
+![Dashboard](docs/screenshots/02-dashboard.png)
 
-## 🛠️ Tech Stack
+## Highlights
 
-- **Backend:** Python 3.12+, Django 5.2 LTS
-- **Database:** PostgreSQL 16
-- **Frontend:** Django Templates, Bootstrap 5, Bootstrap Icons
-- **Auth:** Django Authentication + Role-Based Access Control (planned)
-- **Deployment (planned):** Gunicorn + Nginx
+- **Full clinical workflow** — patient lifecycle, appointment state machine with 6 statuses, consultation form with vitals + diagnoses + prescriptions, patient clinical history timeline
+- **Billing pipeline** — `INV-YYYY-NNNNN` invoices with `select_for_update` locking, 6-status state machine, immutable payments and refunds, insurance claims
+- **Laboratory** — order lifecycle with 5-status state machine, per-item result entry, `LAB-YYYY-NNNNN` numbering, auto-billing signal on completion, 20 seeded lab test profiles
+- **Pharmacy** — atomic inventory drawdown with `select_for_update`, immutable stock movement audit log, dispense state machine, multi-item transaction atomicity
+- **Cross-app orchestration** — lab and pharmacy signals auto-append charges to the visit's bill via a dedicated `Bill.system_add_item()` bypass with idempotency guarantees
+- **Role-based access** — 7 roles (Admin, Doctor, Nurse, Receptionist, Patient, Lab Tech, Pharmacist), mixin-based access control on every view
+- **PDF exports** — bill invoices, prescriptions, and lab reports rendered via xhtml2pdf with per-role access checks
+- **Production niceties** — self-service password reset, admin user provisioning UI, live dashboard with cached counters, coverage-measured tests
 
-## 📦 Modules (Planned)
+## Stack
 
-- `accounts` — Users, roles, authentication
-- `patients` — Patient registration and CRUD
-- `doctors` — Doctor and department management
-- `appointments` — Scheduling and queue management
-- `medical_records` — EMR, diagnosis, prescriptions
-- `billing` — Invoices, insurance, payments
-- `laboratory` — Lab tests and results
-- `pharmacy` — Medicine dispensing
-- `inventory` — Hospital assets and supplies
-- `dashboard` — Analytics and reporting
-- `core` — Shared utilities and base templates
+- **Backend:** Django 5.2 LTS, PostgreSQL 16, Python 3.14
+- **Frontend:** Server-rendered Django templates + Bootstrap 5 + custom design system
+- **PDFs:** xhtml2pdf (no C dependencies)
+- **Tests:** Django test runner, coverage.py
+- **Tooling:** Black, Ruff, django-debug-toolbar, python-decouple
 
-## 🚀 Local Setup
+## Screenshots
 
-### Prerequisites
+| Dashboard | Patient list | Consultation |
+|---|---|---|
+| ![](docs/screenshots/02-dashboard.png) | ![](docs/screenshots/03-patients.png) | ![](docs/screenshots/06-consultation.png) |
 
-- Python 3.12 or higher
-- PostgreSQL 16
-- Git
+| Appointments | Lab queue | Inventory |
+|---|---|---|
+| ![](docs/screenshots/04-appointments.png) | ![](docs/screenshots/07-lab-queue.png) | ![](docs/screenshots/09-inventory.png) |
 
-### Installation
+## Architecture at a glance
+
+Ten Django apps decoupled through signals rather than direct imports. When a lab order completes, a signal fires that the billing app receives — billing appends the lab items to the visit's bill without either app knowing about the other's internals.
+
+```
+patient → appointment → consultation → diagnosis + prescription
+                                    ↘
+                                    lab order → results → bill
+                                    ↘
+                                    dispense → inventory drawdown → bill
+```
+
+Key architectural decisions:
+
+- **State machines** on Bill, Appointment, LabOrder, Dispense — each with an `ALLOWED_TRANSITIONS` dictionary and a `can_transition_to()` method
+- **`Bill.system_add_item()`** — the only way to add items after bill finalization, used exclusively by back-of-house signals
+- **`is_billed` idempotency flags** on LabOrderItem and DispenseItem — prevent double-billing if signals fire twice
+- **`select_for_update` locking** on all sequence generators to prevent race conditions
+- **Immutable financial records** — Payment, Refund, StockMovement enforce immutability at `clean()`, admin `has_change_permission=False`, and `delete()` raising `ValidationError`
+
+## Running locally
+
+Prerequisites: Python 3.14, PostgreSQL 16, virtualenv.
 
 ```bash
-# 1. Clone the repository
 git clone <repo-url>
 cd multicare-hms
 
-# 2. Create and activate virtual environment
 python -m venv venv
-.\venv\Scripts\Activate.ps1     # Windows PowerShell
-# source venv/bin/activate      # Linux/Mac
+.\venv\Scripts\Activate.ps1   # Windows PowerShell
+# source venv/bin/activate    # macOS / Linux
 
-# 3. Install dependencies
 pip install -r requirements.txt
 
-# 4. Configure environment variables
-copy .env.example .env
-# Edit .env and fill in real database credentials
+createdb multicare_hms
+cp .env.example .env          # then edit with your DB credentials
 
-# 5. Run migrations
 python manage.py migrate
+python manage.py seed_services
+python manage.py seed_lab_tests
+python manage.py seed_conditions
+python manage.py seed_medications
+python manage.py createsuperuser
 
-# 6. Start the dev server
 python manage.py runserver
 ```
 
-Visit **http://127.0.0.1:8000/** to view the app.
+Visit `http://127.0.0.1:8000/`.
 
-## 🗂️ Project Structure
-multicare-hms/
-├── core/ # Shared app (base templates, home page)
-├── multicare_hms/ # Django project settings
-├── static/ # Source static files
-├── staticfiles/ # Collected static files (auto)
-├── media/ # User uploads
-├── templates/ # Project-wide templates
-├── venv/ # Virtual environment (not committed)
-├── .env # Secrets (not committed)
-├── .env.example # Env template
-├── manage.py
-├── requirements.txt
-└── README.md
-## 📅 Sprint Log
+## Test users (dev DB only)
 
-| Sprint | Epic | Status |
-|--------|------|--------|
-| Sprint 1 | Project Foundation | 🟡 In Progress |
-| Sprint 2 | Authentication | ⏳ Planned |
-| Sprint 3 | Patient Management | ⏳ Planned |
-| Sprint 4 | Appointment Management | ⏳ Planned |
-| Sprint 5 | Clinical Management | ⏳ Planned |
-| Sprint 6 | Billing | ⏳ Planned |
-| Sprint 7 | Lab / Pharmacy / Inventory | ⏳ Planned |
-| Sprint 8 | Analytics & Deployment | ⏳ Planned |
+| Role | Username | Password |
+|---|---|---|
+| Admin | `admin` | `Admin@12345` |
+| Doctor | `dr_sharma` | `Doctor@123` |
+| Patient | `sonu` | `Patient@123` |
+| Lab Tech | `labtech1` | `LabTech@123` |
+| Pharmacist | `pharma1` | `Pharma@123` |
 
-## 📜 License
+## Testing
 
-For educational and portfolio purposes.
-
-## Running Tests
-
-```powershell
-python manage.py test
+```bash
+python manage.py test               # 316 tests
+coverage run manage.py test         # run under coverage
+coverage report                     # console report
+coverage html                       # open htmlcov/index.html
 ```
 
-## Measuring Coverage
+## Sprint history
 
-```powershell
-coverage run manage.py test
-coverage report
-coverage html   # opens htmlcov/index.html
-```
+Each sprint is one commit on `main`. Run `git log --oneline` to see the arc:
 
-Current coverage: **~XX%** (run `coverage report` to update).
+- **Sprint 1** — Foundation: Django scaffold, PostgreSQL, base template
+- **Sprint 2** — Custom User model with 7 roles, RBAC mixins
+- **Sprint 3** — Patient lifecycle with `MC-YYYY-NNNNN` IDs
+- **Sprint 4** — Appointments with 6-status state machine
+- **Sprint 5** — EMR: MedicalRecord, Vitals, Diagnoses, Prescriptions
+- **Sprint 6** — Billing: `INV-YYYY-NNNNN`, payments, refunds, insurance
+- **Sprint 7** — Laboratory + Pharmacy with cross-app auto-billing
+- **Sprint 8** — PDFs, password reset, user provisioning, dashboard, coverage
+- **Sprint 9-lite** — Visual polish, design system
+
+## Known limits
+
+- Single-hospital scale — not multi-tenant
+- LocMemCache in dev; Redis planned for production
+- No deployment configuration yet (Dockerfile, gunicorn, WhiteNoise pending)
+- Doctor profile creation still requires Django admin
+- In-app notifications not implemented (deferred — needs a real delivery channel to be meaningful)
+
+## License
+
+MIT.

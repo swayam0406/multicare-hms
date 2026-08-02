@@ -27,8 +27,18 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["stats"] = _get_dashboard_stats()
+        ctx["recent_activity"] = _get_recent_activity()
         ctx["today"] = timezone.localdate()
+        ctx["greeting"] = _greeting_for_hour(timezone.localtime().hour)
         return ctx
+
+
+def _greeting_for_hour(hour: int) -> str:
+    if hour < 12:
+        return "Good morning"
+    if hour < 17:
+        return "Good afternoon"
+    return "Good evening"
 
 
 def _get_dashboard_stats() -> dict:
@@ -49,12 +59,20 @@ def _get_dashboard_stats() -> dict:
     day_start = timezone.make_aware(datetime.combine(today, datetime.min.time()))
     day_end = day_start + timedelta(days=1)
 
+    # Also compute "yesterday" for delta comparison
+    yday_start = day_start - timedelta(days=1)
+    yday_end = day_start
+
     # ---------- Appointments ----------
     appts_today = Appointment.objects.filter(
         scheduled_start__gte=day_start,
         scheduled_start__lt=day_end,
     )
     appts_status = dict(appts_today.values_list("status").annotate(n=Count("id")))
+    appts_yesterday = Appointment.objects.filter(
+        scheduled_start__gte=yday_start,
+        scheduled_start__lt=yday_end,
+    ).count()
 
     # ---------- Billing ----------
     bills_draft = Bill.objects.filter(status="DRAFT").count()
@@ -66,6 +84,12 @@ def _get_dashboard_stats() -> dict:
         status="COMPLETED",
         received_at__gte=day_start,
         received_at__lt=day_end,
+    ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+
+    revenue_yesterday = Payment.objects.filter(
+        status="COMPLETED",
+        received_at__gte=yday_start,
+        received_at__lt=yday_end,
     ).aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
     # ---------- Pharmacy ----------
@@ -100,6 +124,7 @@ def _get_dashboard_stats() -> dict:
     stats = {
         "appointments": {
             "total": appts_today.count(),
+            "yesterday": appts_yesterday,
             "scheduled": appts_status.get("SCHEDULED", 0),
             "confirmed": appts_status.get("CONFIRMED", 0),
             "in_progress": appts_status.get("IN_PROGRESS", 0),
@@ -111,6 +136,7 @@ def _get_dashboard_stats() -> dict:
             "drafts": bills_draft,
             "outstanding": bills_outstanding,
             "revenue_today": revenue_today,
+            "revenue_yesterday": revenue_yesterday,
         },
         "pharmacy": {
             "dispenses_today": dispenses_today,
@@ -128,3 +154,81 @@ def _get_dashboard_stats() -> dict:
 
     cache.set("admin_dashboard_stats", stats, CACHE_TTL)
     return stats
+
+
+def _get_recent_activity() -> list:
+    """
+    Recent notable events across the system — today's completed appointments,
+    latest lab completions, recent dispenses. Small list, cached.
+    """
+    cached = cache.get("admin_dashboard_activity")
+    if cached is not None:
+        return cached
+
+    from appointments.models import Appointment
+    from laboratory.models import LabOrder
+    from pharmacy.models import Dispense
+
+    activity = []
+
+    for appt in (
+        Appointment.objects.filter(
+            status="COMPLETED",
+        )
+        .select_related("patient", "doctor__user")
+        .order_by("-updated_at")[:5]
+    ):
+        activity.append(
+            {
+                "kind": "appointment",
+                "icon": "bi-calendar-check",
+                "color": "success",
+                "title": "Consultation completed",
+                "subtitle": f"{appt.patient.full_name} with {appt.doctor.display_name}",
+                "when": appt.updated_at,
+            }
+        )
+
+    for order in (
+        LabOrder.objects.filter(
+            status="COMPLETED",
+        )
+        .select_related("patient")
+        .order_by("-completed_at")[:5]
+    ):
+        if order.completed_at:
+            activity.append(
+                {
+                    "kind": "lab",
+                    "icon": "bi-clipboard2-check",
+                    "color": "info",
+                    "title": f"Lab report ready ({order.order_number})",
+                    "subtitle": f"{order.patient.full_name}",
+                    "when": order.completed_at,
+                }
+            )
+
+    for disp in (
+        Dispense.objects.filter(
+            status="DISPENSED",
+        )
+        .select_related("patient")
+        .order_by("-dispensed_at")[:5]
+    ):
+        if disp.dispensed_at:
+            activity.append(
+                {
+                    "kind": "dispense",
+                    "icon": "bi-capsule",
+                    "color": "primary",
+                    "title": f"Dispense completed ({disp.dispense_number})",
+                    "subtitle": f"{disp.patient.full_name}",
+                    "when": disp.dispensed_at,
+                }
+            )
+
+    activity.sort(key=lambda item: item["when"], reverse=True)
+    activity = activity[:8]
+
+    cache.set("admin_dashboard_activity", activity, CACHE_TTL)
+    return activity

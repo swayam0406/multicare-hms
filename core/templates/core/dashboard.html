@@ -4,203 +4,254 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-end mb-4 flex-wrap gap-2">
-    <div>
-        <h2 class="mb-1">
-            <i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard
-        </h2>
-        <span class="text-muted small">
-            Today &middot; {{ today|date:"l, F j, Y" }}
-        </span>
-    </div>
-    <div class="small text-muted">
-        <i class="bi bi-lightning-charge me-1"></i>Refreshes every 60 seconds
-    </div>
-</div>
+<div class="dashboard">
 
-{# ---------- Appointments ---------- #}
-<div class="mb-4">
-    <h6 class="text-uppercase text-muted small mb-3">
-        <i class="bi bi-calendar-event me-1"></i>Appointments Today
-    </h6>
-    <div class="row g-3">
-        <div class="col-sm-6 col-md-3">
-            <a href="{% url 'appointments:list' %}?quick=today" class="text-decoration-none text-reset">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">Total</div>
-                        <div class="display-6 fw-bold text-primary">
-                            {{ stats.appointments.total }}
+    {# ---------- Hero ---------- #}
+    <div class="dash-hero mb-4">
+        <div class="row align-items-center g-3">
+            <div class="col-lg-8">
+                <h1 class="mb-1">
+                    {{ greeting }}, {{ user.first_name|default:user.username }}
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>
+                    {{ today|date:"l, F j, Y" }}
+                    <span class="mx-2 text-slate-300">·</span>
+                    <span class="text-muted">Here's what's happening at Multicare today.</span>
+                </p>
+            </div>
+            <div class="col-lg-4">
+                <div class="hero-metric">
+                    <div class="hero-metric-label">Revenue today</div>
+                    <div class="hero-metric-value">
+                        ₹<span class="tabular">{{ stats.billing.revenue_today }}</span>
+                    </div>
+                    <div class="hero-metric-sub">
+                        {% if stats.billing.revenue_today > stats.billing.revenue_yesterday %}
+                        <i class="bi bi-arrow-up-right text-success"></i>
+                        <span class="text-success">
+                            +₹{{ stats.billing.revenue_today|floatformat:0 }}
+                        </span>
+                        vs yesterday
+                        {% elif stats.billing.revenue_yesterday > 0 %}
+                        <span class="text-muted">
+                            Yesterday: ₹{{ stats.billing.revenue_yesterday }}
+                        </span>
+                        {% else %}
+                        <span class="text-muted">First day of activity</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# ---------- Operations row ---------- #}
+    <div class="section-title mb-3">
+        <i class="bi bi-activity me-1"></i>OPERATIONS
+    </div>
+    <div class="row g-3 mb-4">
+
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'appointments:list' %}?quick=today" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-icon icon-primary">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">Appointments today</div>
+                        <div class="stat-value">{{ stats.appointments.total }}</div>
+                        <div class="stat-sub">
+                            {% if stats.appointments.completed > 0 %}
+                            <span class="badge bg-success">{{ stats.appointments.completed }} done</span>
+                            {% endif %}
+                            {% if stats.appointments.in_progress > 0 %}
+                            <span class="badge bg-info ms-1">{{ stats.appointments.in_progress }} in progress</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </a>
         </div>
-        <div class="col-sm-6 col-md-3">
-            <div class="card border-0 shadow-sm">
+
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'laboratory:queue' %}" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-icon icon-info">
+                        <i class="bi bi-clipboard2-pulse"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">Lab orders pending</div>
+                        <div class="stat-value">{{ stats.lab.pending }}</div>
+                        <div class="stat-sub">
+                            {{ stats.lab.orders_today }} ordered today
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'pharmacy:queue' %}" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-icon icon-success">
+                        <i class="bi bi-capsule"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">Dispenses today</div>
+                        <div class="stat-value">{{ stats.pharmacy.dispenses_today }}</div>
+                        <div class="stat-sub">
+                            {% if stats.pharmacy.low_stock > 0 %}
+                            <span class="text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                {{ stats.pharmacy.low_stock }} low-stock
+                            </span>
+                            {% else %}
+                            <span class="text-muted">Stock levels OK</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <a href="{% url 'patients:list' %}" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-icon icon-warning">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-body">
+                        <div class="stat-label">Active patients</div>
+                        <div class="stat-value">{{ stats.patients.total_active }}</div>
+                        <div class="stat-sub">
+                            {% if stats.patients.new_today > 0 %}
+                            <span class="text-success">
+                                +{{ stats.patients.new_today }} new today
+                            </span>
+                            {% else %}
+                            <span class="text-muted">No new registrations today</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    {# ---------- Financials + activity ---------- #}
+    <div class="row g-4">
+
+        {# Financial summary column #}
+        <div class="col-lg-4">
+            <div class="section-title mb-3">
+                <i class="bi bi-cash-coin me-1"></i>FINANCIAL
+            </div>
+
+            <div class="card mb-3">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">In progress</div>
-                    <div class="display-6 fw-bold text-info">
-                        {{ stats.appointments.in_progress }}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="small text-muted">Outstanding bills</div>
+                        <a href="{% url 'billing:list' %}?status=FINALIZED" class="small">
+                            View <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <div class="fs-2 fw-bold text-warning">
+                            {{ stats.billing.outstanding }}
+                        </div>
+                        <div class="small text-muted">bills awaiting payment</div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-md-3">
-            <div class="card border-0 shadow-sm">
+
+            <div class="card mb-3">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">Completed</div>
-                    <div class="display-6 fw-bold text-success">
-                        {{ stats.appointments.completed }}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="small text-muted">Draft bills</div>
+                        <a href="{% url 'billing:list' %}?status=DRAFT" class="small">
+                            View <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="d-flex align-items-baseline gap-2">
+                        <div class="fs-2 fw-bold text-slate-600">
+                            {{ stats.billing.drafts }}
+                        </div>
+                        <div class="small text-muted">not yet finalized</div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-md-3">
-            <div class="card border-0 shadow-sm">
+
+            {% if stats.pharmacy.low_stock > 0 %}
+            <div class="card border-warning bg-warning-light">
                 <div class="card-body">
-                    <div class="text-muted small text-uppercase">Cancelled + No-show</div>
-                    <div class="display-6 fw-bold text-secondary">
-                        {{ stats.appointments.cancelled|add:stats.appointments.no_show }}
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stat-icon icon-warning" style="width: 40px; height: 40px; font-size: 1.25rem;">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold text-slate-800">Low stock alert</div>
+                            <div class="small text-muted">
+                                {{ stats.pharmacy.low_stock }} item{{ stats.pharmacy.low_stock|pluralize }} at or below
+                                reorder threshold
+                            </div>
+                        </div>
+                        <a href="{% url 'pharmacy:inventory_list' %}?low=1" class="btn btn-sm btn-warning text-white">
+                            Review
+                        </a>
                     </div>
                 </div>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Recent activity column #}
+        <div class="col-lg-8">
+            <div class="section-title mb-3">
+                <i class="bi bi-clock-history me-1"></i>RECENT ACTIVITY
+            </div>
+
+            <div class="card">
+                {% if recent_activity %}
+                <ul class="activity-list list-unstyled mb-0">
+                    {% for item in recent_activity %}
+                    <li class="activity-item">
+                        <div class="activity-icon text-{{ item.color }}">
+                            <i class="bi {{ item.icon }}"></i>
+                        </div>
+                        <div class="activity-body">
+                            <div class="activity-title">{{ item.title }}</div>
+                            <div class="activity-sub">{{ item.subtitle }}</div>
+                        </div>
+                        <div class="activity-time small text-muted">
+                            {{ item.when|timesince }} ago
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="bi bi-inbox"></i>
+                    </div>
+                    <h5>No activity yet</h5>
+                    <p>
+                        Once staff start recording consultations, lab results, and dispenses,
+                        recent events will appear here.
+                    </p>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
+
 </div>
 
-{# ---------- Billing + Patients row ---------- #}
-<div class="row g-4 mb-4">
-    <div class="col-lg-6">
-        <h6 class="text-uppercase text-muted small mb-3">
-            <i class="bi bi-cash-coin me-1"></i>Billing
-        </h6>
-        <div class="row g-3">
-            <div class="col-sm-4">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">Drafts</div>
-                        <div class="fs-3 fw-bold">{{ stats.billing.drafts }}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <a href="{% url 'billing:list' %}?status=FINALIZED" class="text-decoration-none text-reset">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-muted small text-uppercase">Outstanding</div>
-                            <div class="fs-3 fw-bold text-warning">
-                                {{ stats.billing.outstanding }}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-            <div class="col-sm-4">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">Revenue today</div>
-                        <div class="fs-3 fw-bold text-success">
-                            ₹{{ stats.billing.revenue_today }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <h6 class="text-uppercase text-muted small mb-3">
-            <i class="bi bi-people me-1"></i>Patients
-        </h6>
-        <div class="row g-3">
-            <div class="col-sm-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">New today</div>
-                        <div class="fs-3 fw-bold text-primary">
-                            {{ stats.patients.new_today }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6">
-                <a href="{% url 'patients:list' %}" class="text-decoration-none text-reset">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-muted small text-uppercase">Total active</div>
-                            <div class="fs-3 fw-bold">
-                                {{ stats.patients.total_active }}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# ---------- Lab + Pharmacy row ---------- #}
-<div class="row g-4 mb-4">
-    <div class="col-lg-6">
-        <h6 class="text-uppercase text-muted small mb-3">
-            <i class="bi bi-clipboard2-pulse me-1"></i>Laboratory
-        </h6>
-        <div class="row g-3">
-            <div class="col-sm-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">Orders today</div>
-                        <div class="fs-3 fw-bold text-primary">
-                            {{ stats.lab.orders_today }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6">
-                <a href="{% url 'laboratory:queue' %}" class="text-decoration-none text-reset">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-muted small text-uppercase">Pending in queue</div>
-                            <div class="fs-3 fw-bold text-warning">
-                                {{ stats.lab.pending }}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-6">
-        <h6 class="text-uppercase text-muted small mb-3">
-            <i class="bi bi-capsule me-1"></i>Pharmacy
-        </h6>
-        <div class="row g-3">
-            <div class="col-sm-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="text-muted small text-uppercase">Dispenses today</div>
-                        <div class="fs-3 fw-bold text-success">
-                            {{ stats.pharmacy.dispenses_today }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-6">
-                <a href="{% url 'pharmacy:inventory_list' %}?low=1" class="text-decoration-none text-reset">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body">
-                            <div class="text-muted small text-uppercase">Low stock items</div>
-                            <div class="fs-3 fw-bold text-danger">
-                                {{ stats.pharmacy.low_stock }}
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
+<div class="text-center mt-4">
+    <small class="text-muted">
+        <i class="bi bi-lightning-charge me-1"></i>
+        Dashboard refreshes every 60 seconds
+    </small>
 </div>
 
 {% endblock %}
