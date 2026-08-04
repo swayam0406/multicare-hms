@@ -12,7 +12,6 @@ urlpatterns = [
     path("login/", views.CustomLoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
-
     # Password reset (T-8.1)
     path(
         "password-reset/",
@@ -47,9 +46,7 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path("profile/", views.ProfileView.as_view(), name="profile"),
-
     # Admin user provisioning (T-8.6)
     path("users/", views.UserListView.as_view(), name="user_list"),
-    path("users/create/",
-         views.AdminUserCreateView.as_view(), name="user_create"),
+    path("users/create/", views.AdminUserCreateView.as_view(), name="user_create"),
 ]

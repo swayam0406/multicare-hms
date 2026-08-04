@@ -249,10 +249,10 @@ class PatientClinicalHistoryView(StaffRequiredMixin, DetailView):
                 "medical_record__prescription",
             )
             .prefetch_related(
-    "medical_record__diagnoses__condition",
-    "medical_record__prescription__items__medication",
-    "medical_record__lab_orders__items__service",
-)
+                "medical_record__diagnoses__condition",
+                "medical_record__prescription__items__medication",
+                "medical_record__lab_orders__items__service",
+            )
             .order_by("-scheduled_start")
         )
 

@@ -28,31 +28,44 @@ class CachedOutstandingBillsTagTests(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="ct_doc", email="ctd@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="ct_doc",
+            email="ctd@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="CT-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="CT-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="ct_staff", email="cts@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="ct_staff",
+            email="cts@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.patient = Patient.objects.create(
-            first_name="P", last_name="One",
+            first_name="P",
+            last_name="One",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543210",
+            gender=Patient.Gender.MALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
         cls.cons_svc = ServiceCatalog.objects.create(
-            code="CONS-GEN", name="Consultation",
-            category="CONSULTATION", default_price=Decimal("500.00"),
+            code="CONS-GEN",
+            name="Consultation",
+            category="CONSULTATION",
+            default_price=Decimal("500.00"),
         )
 
     def setUp(self):
@@ -61,15 +74,18 @@ class CachedOutstandingBillsTagTests(TestCase):
 
     def _make_finalized_bill(self, weekday):
         DoctorAvailability.objects.get_or_create(
-            doctor=self.doctor, weekday=weekday,
+            doctor=self.doctor,
+            weekday=weekday,
             defaults={"start_time": time(9, 0), "end_time": time(12, 0)},
         )
         appt = Appointment.objects.create(
-            patient=self.patient, doctor=self.doctor,
+            patient=self.patient,
+            doctor=self.doctor,
             scheduled_start=timezone.make_aware(
                 datetime.combine(_next_weekday(weekday), time(10, 0))
             ),
-            reason="T", booked_by=self.staff,
+            reason="T",
+            booked_by=self.staff,
         )
         bill = Bill.objects.create(appointment=appt, patient=self.patient)
         BillItem.objects.create(bill=bill, service=self.cons_svc, quantity=1)
@@ -78,9 +94,7 @@ class CachedOutstandingBillsTagTests(TestCase):
         return bill
 
     def _render(self):
-        template = Template(
-            "{% load billing_tags %}{% outstanding_bills_count %}"
-        )
+        template = Template("{% load billing_tags %}{% outstanding_bills_count %}")
         return template.render(Context({})).strip()
 
     def test_zero_when_no_bills(self):
@@ -112,9 +126,7 @@ class CachedLowStockTagTests(TestCase):
         cache.clear()
 
     def _render(self):
-        template = Template(
-            "{% load pharmacy_tags %}{% low_stock_count %}"
-        )
+        template = Template("{% load pharmacy_tags %}{% low_stock_count %}")
         return template.render(Context({})).strip()
 
     def test_zero_when_no_inventory(self):
@@ -125,10 +137,14 @@ class CachedLowStockTagTests(TestCase):
         from pharmacy.models import InventoryItem
 
         med = MedicationCatalog.objects.create(
-            name="Test", strength="10mg", form="TABLET",
+            name="Test",
+            strength="10mg",
+            form="TABLET",
         )
         InventoryItem.objects.create(
-            medication=med, quantity_on_hand=5, reorder_threshold=10,
+            medication=med,
+            quantity_on_hand=5,
+            reorder_threshold=10,
         )
         first = self._render()
         self.assertEqual(first, "1")

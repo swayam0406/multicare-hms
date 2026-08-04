@@ -28,29 +28,42 @@ class AdminUserCreateForm(forms.ModelForm):
 
     password1 = forms.CharField(
         label="Password",
-        widget=forms.PasswordInput(attrs={
-            "class": "form-control", "autocomplete": "new-password",
-        }),
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "autocomplete": "new-password",
+            }
+        ),
         strip=False,
     )
     password2 = forms.CharField(
         label="Confirm password",
-        widget=forms.PasswordInput(attrs={
-            "class": "form-control", "autocomplete": "new-password",
-        }),
+        widget=forms.PasswordInput(
+            attrs={
+                "class": "form-control",
+                "autocomplete": "new-password",
+            }
+        ),
         strip=False,
     )
 
     class Meta:
         model = User
         fields = (
-            "username", "email", "first_name", "last_name",
-            "role", "is_active",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "role",
+            "is_active",
         )
         widgets = {
-            "username": forms.TextInput(attrs={
-                "class": "form-control", "autocomplete": "username",
-            }),
+            "username": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "autocomplete": "username",
+                }
+            ),
             "email": forms.EmailInput(attrs={"class": "form-control"}),
             "first_name": forms.TextInput(attrs={"class": "form-control"}),
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
@@ -59,9 +72,7 @@ class AdminUserCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["role"].choices = [
-            (val, label) for val, label in User.Role.choices
-        ]
+        self.fields["role"].choices = [(val, label) for val, label in User.Role.choices]
         self.fields["is_active"].widget.attrs["class"] = "form-check-input"
         self.fields["is_active"].initial = True
 

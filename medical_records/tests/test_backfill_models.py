@@ -38,46 +38,62 @@ class SharedSetup(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="bf_doc", email="bfd@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="bf_doc",
+            email="bfd@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="BF-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="BF-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="bf_staff", email="bfs@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="bf_staff",
+            email="bfs@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.patient = Patient.objects.create(
-            first_name="Alice", last_name="Anderson",
+            first_name="Alice",
+            last_name="Anderson",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.FEMALE, phone="9876543210",
+            gender=Patient.Gender.FEMALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
 
     def _appt(self, weekday=0, status="SCHEDULED"):
         DoctorAvailability.objects.get_or_create(
-            doctor=self.doctor, weekday=weekday,
+            doctor=self.doctor,
+            weekday=weekday,
             defaults={"start_time": time(9, 0), "end_time": time(12, 0)},
         )
         return Appointment.objects.create(
-            patient=self.patient, doctor=self.doctor,
+            patient=self.patient,
+            doctor=self.doctor,
             scheduled_start=timezone.make_aware(
                 datetime.combine(_next_weekday(weekday), time(10, 0))
             ),
-            reason="T", booked_by=self.staff,
+            reason="T",
+            booked_by=self.staff,
             status=status,
         )
 
     def _med(self, name="Paracetamol", strength="500mg", form="TABLET"):
         return MedicationCatalog.objects.create(
-            name=name, strength=strength, form=form,
+            name=name,
+            strength=strength,
+            form=form,
         )
 
 
@@ -139,12 +155,18 @@ class PrescriptionItemCreationTests(SharedSetup):
         med2 = self._med(name="Amoxicillin", strength="250mg", form="CAPSULE")
 
         i1 = PrescriptionItem.objects.create(
-            prescription=self.rx, medication=self.med,
-            dose="1 tablet", frequency="TID", duration_days=5,
+            prescription=self.rx,
+            medication=self.med,
+            dose="1 tablet",
+            frequency="TID",
+            duration_days=5,
         )
         i2 = PrescriptionItem.objects.create(
-            prescription=self.rx, medication=med2,
-            dose="1 capsule", frequency="BID", duration_days=7,
+            prescription=self.rx,
+            medication=med2,
+            dose="1 capsule",
+            frequency="BID",
+            duration_days=7,
         )
         self.assertEqual(self.rx.items.count(), 2)
         self.assertIn(i1, self.rx.items.all())
@@ -152,8 +174,11 @@ class PrescriptionItemCreationTests(SharedSetup):
 
     def test_item_optional_instructions(self):
         item = PrescriptionItem.objects.create(
-            prescription=self.rx, medication=self.med,
-            dose="1 tablet", frequency="TID", duration_days=5,
+            prescription=self.rx,
+            medication=self.med,
+            dose="1 tablet",
+            frequency="TID",
+            duration_days=5,
             instructions="Take after food.",
         )
         self.assertEqual(item.instructions, "Take after food.")
@@ -166,8 +191,11 @@ class PrescriptionItemCascadeTests(SharedSetup):
         rx = Prescription.objects.create(medical_record=mr)
         med = self._med()
         PrescriptionItem.objects.create(
-            prescription=rx, medication=med,
-            dose="1", frequency="TID", duration_days=3,
+            prescription=rx,
+            medication=med,
+            dose="1",
+            frequency="TID",
+            duration_days=3,
         )
         self.assertEqual(PrescriptionItem.objects.count(), 1)
 
@@ -202,14 +230,14 @@ class PatientDetailLatestVisitTests(SharedSetup):
     def test_completed_appointment_becomes_latest(self):
         # First visit — completed
         old_appt = self._appt(0, status="COMPLETED")
-        old_mr = MedicalRecord.objects.create(
+        MedicalRecord.objects.create(
             appointment=old_appt,
             chief_complaint="Old fever",
         )
 
         # Newer visit — still in progress
         new_appt = self._appt(1, status="IN_PROGRESS")
-        new_mr = MedicalRecord.objects.create(
+        MedicalRecord.objects.create(
             appointment=new_appt,
             chief_complaint="Recent cough",
         )

@@ -279,7 +279,7 @@ class PaymentActionTests(BillActionsSetupMixin, TestCase):
         self.assertEqual(self.bill.payments.count(), 0)
 
     def test_payment_on_draft_bill_rejected(self):
-        draft = Bill.objects.create(appointment=self.appt, patient=self.patient)
+        Bill.objects.create(appointment=self.appt, patient=self.patient)
         # Whoops — appointment is OneToOne. Delete existing and try again with fresh appt.
         # Instead, just test the guard: reset our bill to DRAFT-like unfinalized state.
         # Simpler: create a separate appt+bill for isolation.
@@ -368,7 +368,7 @@ class RBACTests(BillActionsSetupMixin, TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_patient_forbidden(self):
-        pat = User.objects.create_user(
+        User.objects.create_user(
             username="pat",
             email="pat@t.local",
             password="pass1234",

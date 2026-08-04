@@ -27,13 +27,15 @@ select = [
     "E",   # pycodestyle errors
     "W",   # pycodestyle warnings
     "F",   # pyflakes
-    "I",   # isort (import sorting)
+    "I",   # isort (import ordering)
     "B",   # flake8-bugbear
-    "DJ",  # flake8-django
+    "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
 ]
 ignore = [
-    "E501",  # line too long — Black handles line length
+    "E501",  # line too long (Black handles this)
+    "B008",  # do not perform function calls in argument defaults (Django uses this pattern)
+    "DJ012", # Django model method order (cosmetic; skip)
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -27,35 +27,46 @@ class VitalsSetup(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="v_doc", email="vd@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="v_doc",
+            email="vd@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="V-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="V-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="v_staff", email="vs@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="v_staff",
+            email="vs@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.patient = Patient.objects.create(
-            first_name="A", last_name="One",
+            first_name="A",
+            last_name="One",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543210",
+            gender=Patient.Gender.MALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
         monday = _next_weekday(0)
         cls.appt = Appointment.objects.create(
-            patient=cls.patient, doctor=cls.doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(monday, time(10, 0))
-            ),
-            reason="T", booked_by=cls.staff,
+            patient=cls.patient,
+            doctor=cls.doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(monday, time(10, 0))),
+            reason="T",
+            booked_by=cls.staff,
         )
         cls.mr = MedicalRecord.objects.create(appointment=cls.appt)
 

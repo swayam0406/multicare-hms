@@ -27,40 +27,54 @@ class MedicalRecordSetup(TestCase):
     def setUpTestData(cls):
         cls.dept = Department.objects.create(name="Card", code="CARD")
         cls.doc_user = User.objects.create_user(
-            username="mr_doc", email="mrd@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="mr_doc",
+            email="mrd@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="MR-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="MR-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
         DoctorAvailability.objects.create(
-            doctor=cls.doctor, weekday=0,
-            start_time=time(9, 0), end_time=time(12, 0),
+            doctor=cls.doctor,
+            weekday=0,
+            start_time=time(9, 0),
+            end_time=time(12, 0),
         )
         cls.staff = User.objects.create_user(
-            username="mr_staff", email="mrs@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="mr_staff",
+            email="mrs@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.patient = Patient.objects.create(
-            first_name="A", last_name="One",
+            first_name="A",
+            last_name="One",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543210",
+            gender=Patient.Gender.MALE,
+            phone="9876543210",
             registered_by=cls.staff,
         )
 
     def _appt(self, weekday=0):
         DoctorAvailability.objects.get_or_create(
-            doctor=self.doctor, weekday=weekday,
+            doctor=self.doctor,
+            weekday=weekday,
             defaults={"start_time": time(9, 0), "end_time": time(12, 0)},
         )
         return Appointment.objects.create(
-            patient=self.patient, doctor=self.doctor,
+            patient=self.patient,
+            doctor=self.doctor,
             scheduled_start=timezone.make_aware(
                 datetime.combine(_next_weekday(weekday), time(10, 0))
             ),
-            reason="T", booked_by=self.staff,
+            reason="T",
+            booked_by=self.staff,
         )
 
 
@@ -156,8 +170,7 @@ class MedicalRecordSignalLockTests(MedicalRecordSetup):
         # If not (locking happens elsewhere), this is a soft check.
         if not mr.is_locked:
             self.skipTest(
-                "MedicalRecord is not auto-locked on appointment completion "
-                "in this build."
+                "MedicalRecord is not auto-locked on appointment completion " "in this build."
             )
         self.assertTrue(mr.is_locked)
         self.assertIsNotNone(mr.locked_at)

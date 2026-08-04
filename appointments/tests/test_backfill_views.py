@@ -1,7 +1,7 @@
 """Backfill view tests from Sprint 4:
-  - AppointmentListView (staff filters)
-  - MyAppointmentsView (patient self-service)
-  - AppointmentTransitionView (state machine)
+- AppointmentListView (staff filters)
+- MyAppointmentsView (patient self-service)
+- AppointmentTransitionView (state machine)
 """
 
 from datetime import datetime, time, timedelta
@@ -31,77 +31,101 @@ class SharedSetup(TestCase):
         cls.dept = Department.objects.create(name="Card", code="CARD")
 
         cls.doc_user = User.objects.create_user(
-            username="av_doc", email="avd@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="av_doc",
+            email="avd@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor = Doctor.objects.create(
-            user=cls.doc_user, department=cls.dept,
-            license_number="AV-1", specialty="x",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc_user,
+            department=cls.dept,
+            license_number="AV-1",
+            specialty="x",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
 
         cls.doc2_user = User.objects.create_user(
-            username="av_doc2", email="avd2@t.local",
-            password="pass1234", role=User.Role.DOCTOR,
+            username="av_doc2",
+            email="avd2@t.local",
+            password="pass1234",
+            role=User.Role.DOCTOR,
         )
         cls.doctor2 = Doctor.objects.create(
-            user=cls.doc2_user, department=cls.dept,
-            license_number="AV-2", specialty="y",
-            qualifications="MBBS", consultation_fee=Decimal("500.00"),
+            user=cls.doc2_user,
+            department=cls.dept,
+            license_number="AV-2",
+            specialty="y",
+            qualifications="MBBS",
+            consultation_fee=Decimal("500.00"),
         )
 
         # Availability for all weekdays to make appt creation easy
         for weekday in range(7):
             for doc in [cls.doctor, cls.doctor2]:
                 DoctorAvailability.objects.get_or_create(
-                    doctor=doc, weekday=weekday,
-                    defaults={"start_time": time(9, 0),
-                              "end_time": time(17, 0)},
+                    doctor=doc,
+                    weekday=weekday,
+                    defaults={"start_time": time(9, 0), "end_time": time(17, 0)},
                 )
 
         cls.staff = User.objects.create_user(
-            username="av_staff", email="avs@t.local",
-            password="pass1234", role=User.Role.RECEPTIONIST,
+            username="av_staff",
+            email="avs@t.local",
+            password="pass1234",
+            role=User.Role.RECEPTIONIST,
         )
         cls.admin = User.objects.create_user(
-            username="av_admin", email="ava@t.local",
-            password="pass1234", role=User.Role.ADMIN,
+            username="av_admin",
+            email="ava@t.local",
+            password="pass1234",
+            role=User.Role.ADMIN,
         )
 
         cls.pat_user = User.objects.create_user(
-            username="av_pat", email="avp@t.local",
-            password="pass1234", role=User.Role.PATIENT,
+            username="av_pat",
+            email="avp@t.local",
+            password="pass1234",
+            role=User.Role.PATIENT,
         )
         cls.patient = Patient.objects.create(
-            first_name="Alice", last_name="Anderson",
+            first_name="Alice",
+            last_name="Anderson",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.FEMALE, phone="9876543210",
-            registered_by=cls.staff, user=cls.pat_user,
+            gender=Patient.Gender.FEMALE,
+            phone="9876543210",
+            registered_by=cls.staff,
+            user=cls.pat_user,
         )
 
         cls.other_pat_user = User.objects.create_user(
-            username="av_pat2", email="avp2@t.local",
-            password="pass1234", role=User.Role.PATIENT,
+            username="av_pat2",
+            email="avp2@t.local",
+            password="pass1234",
+            role=User.Role.PATIENT,
         )
         cls.other_patient = Patient.objects.create(
-            first_name="Bob", last_name="Brown",
+            first_name="Bob",
+            last_name="Brown",
             date_of_birth="1990-01-01",
-            gender=Patient.Gender.MALE, phone="9876543211",
-            registered_by=cls.staff, user=cls.other_pat_user,
+            gender=Patient.Gender.MALE,
+            phone="9876543211",
+            registered_by=cls.staff,
+            user=cls.other_pat_user,
         )
 
-    def _make_appt(self, doctor=None, patient=None, days_offset=1,
-                   hour=10, status="SCHEDULED"):
+    def _make_appt(self, doctor=None, patient=None, days_offset=1, hour=10, status="SCHEDULED"):
         """Helper: create appt N days from today at HH:00."""
         doctor = doctor or self.doctor
         patient = patient or self.patient
         day = timezone.localdate() + timedelta(days=days_offset)
         return Appointment.objects.create(
-            patient=patient, doctor=doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(day, time(hour, 0))
-            ),
-            reason="Test", booked_by=self.staff, status=status,
+            patient=patient,
+            doctor=doctor,
+            scheduled_start=timezone.make_aware(datetime.combine(day, time(hour, 0))),
+            reason="Test",
+            booked_by=self.staff,
+            status=status,
         )
 
 
@@ -141,12 +165,16 @@ class AppointmentListFilterTests(SharedSetup):
     def setUp(self):
         # A future appt (SCHEDULED) with doctor 1
         self.future_appt = self._make_appt(
-            doctor=self.doctor, days_offset=5, hour=10,
+            doctor=self.doctor,
+            days_offset=5,
+            hour=10,
             status="SCHEDULED",
         )
         # A completed past appt with doctor 2
         self.past_appt = self._make_appt(
-            doctor=self.doctor2, days_offset=-5, hour=14,
+            doctor=self.doctor2,
+            days_offset=-5,
+            hour=14,
             status="COMPLETED",
         )
 
@@ -174,7 +202,9 @@ class AppointmentListFilterTests(SharedSetup):
 
     def test_quick_today(self):
         today_appt = self._make_appt(
-            doctor=self.doctor, days_offset=0, hour=11,
+            doctor=self.doctor,
+            days_offset=0,
+            hour=11,
             status="SCHEDULED",
         )
         self.client.login(username="av_staff", password="pass1234")
@@ -239,21 +269,33 @@ class MyAppointmentsContentTests(SharedSetup):
 
     def setUp(self):
         self.upcoming = self._make_appt(
-            doctor=self.doctor, patient=self.patient,
-            days_offset=5, hour=10, status="SCHEDULED",
+            doctor=self.doctor,
+            patient=self.patient,
+            days_offset=5,
+            hour=10,
+            status="SCHEDULED",
         )
         self.past = self._make_appt(
-            doctor=self.doctor, patient=self.patient,
-            days_offset=-5, hour=14, status="COMPLETED",
+            doctor=self.doctor,
+            patient=self.patient,
+            days_offset=-5,
+            hour=14,
+            status="COMPLETED",
         )
         self.cancelled = self._make_appt(
-            doctor=self.doctor, patient=self.patient,
-            days_offset=7, hour=11, status="CANCELLED",
+            doctor=self.doctor,
+            patient=self.patient,
+            days_offset=7,
+            hour=11,
+            status="CANCELLED",
         )
         # Another patient's appt — should NOT appear
         self.other_appt = self._make_appt(
-            doctor=self.doctor, patient=self.other_patient,
-            days_offset=3, hour=15, status="SCHEDULED",
+            doctor=self.doctor,
+            patient=self.other_patient,
+            days_offset=3,
+            hour=15,
+            status="SCHEDULED",
         )
 
     def test_upcoming_includes_scheduled(self):
@@ -301,9 +343,12 @@ class TransitionAccessTests(SharedSetup):
     def test_staff_can_confirm_scheduled(self):
         appt = self._make_appt(status="SCHEDULED")
         self.client.login(username="av_staff", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "CONFIRMED",
-        })
+        response = self.client.post(
+            self._url(appt),
+            {
+                "new_status": "CONFIRMED",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         appt.refresh_from_db()
         self.assertEqual(appt.status, "CONFIRMED")
@@ -311,9 +356,12 @@ class TransitionAccessTests(SharedSetup):
     def test_patient_forbidden(self):
         appt = self._make_appt(status="SCHEDULED")
         self.client.login(username="av_pat", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "CONFIRMED",
-        })
+        response = self.client.post(
+            self._url(appt),
+            {
+                "new_status": "CONFIRMED",
+            },
+        )
         self.assertEqual(response.status_code, 403)
 
 
@@ -324,28 +372,37 @@ class TransitionValidationTests(SharedSetup):
     def test_invalid_transition_rejected(self):
         appt = self._make_appt(status="SCHEDULED")
         self.client.login(username="av_staff", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "COMPLETED",  # SCHEDULED -> COMPLETED not valid
-        })
+        self.client.post(
+            self._url(appt),
+            {
+                "new_status": "COMPLETED",  # SCHEDULED -> COMPLETED not valid
+            },
+        )
         appt.refresh_from_db()
         self.assertEqual(appt.status, "SCHEDULED")
 
     def test_cancel_requires_reason(self):
         appt = self._make_appt(status="SCHEDULED")
         self.client.login(username="av_staff", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "CANCELLED",
-        })
+        self.client.post(
+            self._url(appt),
+            {
+                "new_status": "CANCELLED",
+            },
+        )
         appt.refresh_from_db()
         self.assertNotEqual(appt.status, "CANCELLED")
 
     def test_cancel_with_reason(self):
         appt = self._make_appt(status="SCHEDULED")
         self.client.login(username="av_staff", password="pass1234")
-        self.client.post(self._url(appt), {
-            "new_status": "CANCELLED",
-            "cancelled_reason": "Patient rescheduled by phone.",
-        })
+        self.client.post(
+            self._url(appt),
+            {
+                "new_status": "CANCELLED",
+                "cancelled_reason": "Patient rescheduled by phone.",
+            },
+        )
         appt.refresh_from_db()
         self.assertEqual(appt.status, "CANCELLED")
         self.assertEqual(
@@ -366,9 +423,12 @@ class ClinicalActionAuthTests(SharedSetup):
     def test_owning_doctor_can_start_consultation(self):
         appt = self._make_appt(doctor=self.doctor, status="CONFIRMED")
         self.client.login(username="av_doc", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "IN_PROGRESS",
-        })
+        response = self.client.post(
+            self._url(appt),
+            {
+                "new_status": "IN_PROGRESS",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         appt.refresh_from_db()
         self.assertEqual(appt.status, "IN_PROGRESS")
@@ -376,9 +436,12 @@ class ClinicalActionAuthTests(SharedSetup):
     def test_other_doctor_forbidden_from_clinical_action(self):
         appt = self._make_appt(doctor=self.doctor, status="CONFIRMED")
         self.client.login(username="av_doc2", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "IN_PROGRESS",
-        })
+        response = self.client.post(
+            self._url(appt),
+            {
+                "new_status": "IN_PROGRESS",
+            },
+        )
         self.assertEqual(response.status_code, 403)
         appt.refresh_from_db()
         self.assertEqual(appt.status, "CONFIRMED")
@@ -386,9 +449,12 @@ class ClinicalActionAuthTests(SharedSetup):
     def test_admin_can_start_any_consultation(self):
         appt = self._make_appt(doctor=self.doctor, status="CONFIRMED")
         self.client.login(username="av_admin", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "IN_PROGRESS",
-        })
+        response = self.client.post(
+            self._url(appt),
+            {
+                "new_status": "IN_PROGRESS",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         appt.refresh_from_db()
         self.assertEqual(appt.status, "IN_PROGRESS")
@@ -396,9 +462,12 @@ class ClinicalActionAuthTests(SharedSetup):
     def test_receptionist_cannot_complete(self):
         appt = self._make_appt(doctor=self.doctor, status="IN_PROGRESS")
         self.client.login(username="av_staff", password="pass1234")
-        response = self.client.post(self._url(appt), {
-            "new_status": "COMPLETED",
-        })
+        response = self.client.post(
+            self._url(appt),
+            {
+                "new_status": "COMPLETED",
+            },
+        )
         self.assertEqual(response.status_code, 403)
 
 
@@ -409,10 +478,13 @@ class TransitionNoteTrailTests(SharedSetup):
     def test_note_appended_to_appointment_notes(self):
         appt = self._make_appt(status="SCHEDULED")
         self.client.login(username="av_staff", password="pass1234")
-        self.client.post(self._url(appt), {
-            "new_status": "CONFIRMED",
-            "notes": "Confirmed via phone.",
-        })
+        self.client.post(
+            self._url(appt),
+            {
+                "new_status": "CONFIRMED",
+                "notes": "Confirmed via phone.",
+            },
+        )
         appt.refresh_from_db()
         self.assertIn("Confirmed via phone.", appt.notes)
 

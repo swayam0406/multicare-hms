@@ -103,7 +103,7 @@ class PatientHistoryViewTests(TestCase):
         self.assertContains(response, "J00")
 
     def test_patient_forbidden(self):
-        pat = User.objects.create_user(
+        User.objects.create_user(
             username="phpat",
             email="phpat@t.local",
             password="pass1234",

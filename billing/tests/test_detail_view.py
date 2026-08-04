@@ -108,7 +108,7 @@ class BillDetailViewTests(TestCase):
 
     def test_patient_forbidden(self):
         bill = self._finalized_bill()
-        pat_user = User.objects.create_user(
+        User.objects.create_user(
             username="pat",
             email="pat@t.local",
             password="pass1234",

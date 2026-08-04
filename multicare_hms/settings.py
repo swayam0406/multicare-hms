@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     "medical_records",
     "billing",
     "laboratory",
-    "pharmacy"
+    "pharmacy",
 ]
 
 MIDDLEWARE = [
@@ -62,7 +62,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-
 ]
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -232,7 +231,6 @@ LOGGING = {
             "propagate": False,
         },
     },
-
 }
 # ---------- Email (Sprint 8 T-8.1) ----------
 # Dev: prints reset emails to the console.

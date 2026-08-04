@@ -46,14 +46,19 @@ class UserListView(AdminRequiredMixin, ListView):
 
         q = self.request.GET.get("q", "").strip()
         if q:
-            qs = qs.filter(
-                username__icontains=q,
-            ) | UserModel.objects.filter(
-                email__icontains=q,
-            ) | UserModel.objects.filter(
-                first_name__icontains=q,
-            ) | UserModel.objects.filter(
-                last_name__icontains=q,
+            qs = (
+                qs.filter(
+                    username__icontains=q,
+                )
+                | UserModel.objects.filter(
+                    email__icontains=q,
+                )
+                | UserModel.objects.filter(
+                    first_name__icontains=q,
+                )
+                | UserModel.objects.filter(
+                    last_name__icontains=q,
+                )
             )
             qs = qs.distinct().order_by("-date_joined")
 

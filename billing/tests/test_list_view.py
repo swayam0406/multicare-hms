@@ -92,7 +92,7 @@ class BillListViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_patient_forbidden(self):
-        pat_user = User.objects.create_user(
+        User.objects.create_user(
             username="blp",
             email="blp@t.local",
             password="pass1234",
