@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.core.cache import cache
 from django.db.models import Count, Sum
+from django.http import JsonResponse
 from django.utils import timezone
 from django.views.generic import TemplateView
 
@@ -232,3 +233,8 @@ def _get_recent_activity() -> list:
 
     cache.set("admin_dashboard_activity", activity, CACHE_TTL)
     return activity
+
+
+def health(request):
+    """Health check endpoint for Render / monitoring."""
+    return JsonResponse({"status": "ok"})
