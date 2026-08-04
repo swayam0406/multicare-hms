@@ -18,8 +18,15 @@ echo "Running database migrations..."
 python manage.py migrate --noinput
 
 # Collect static
+# Collect static
 echo "Collecting static files..."
 python manage.py collectstatic --noinput --clear
+
+# Bootstrap admin user and seed catalogs (idempotent)
+echo "Running deploy bootstrap..."
+python manage.py bootstrap_deploy || echo "Bootstrap encountered errors; continuing."
+
+echo "=== Setup complete, handing off to CMD ==="
 
 echo "=== Setup complete, handing off to CMD ==="
 exec "$@"
