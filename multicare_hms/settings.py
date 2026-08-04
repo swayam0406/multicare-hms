@@ -3,6 +3,7 @@ Django settings for multicare_hms project.
 Multicare Hospital Management System (HMS)
 """
 
+import sys
 from pathlib import Path
 
 from decouple import Csv, config
@@ -63,7 +64,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
 ]
-import sys
+
+
 _IS_TESTING = "test" in sys.argv or "pytest" in sys.modules
 
 STORAGES = {
