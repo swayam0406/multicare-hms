@@ -1,0 +1,56 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+.Python
+.pytest_cache
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Django
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+
+# Coverage & test
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# Docs / dev-only
+docs/screenshots/
+README.old.md
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker (avoid recursion)
+Dockerfile
+docker-compose*.yml
+.dockerignore

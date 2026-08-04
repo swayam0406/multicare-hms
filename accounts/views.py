@@ -11,7 +11,6 @@ from django.views.generic import CreateView, ListView, TemplateView
 from .forms import AdminUserCreateForm, LoginForm
 from .mixins import AdminRequiredMixin
 
-
 UserModel = get_user_model()
 
 

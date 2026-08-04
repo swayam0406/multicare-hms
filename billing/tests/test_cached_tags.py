@@ -1,13 +1,12 @@
 """Tests for cached template tags."""
 
+from datetime import datetime, time, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.template import Context, Template
 from django.test import TestCase
-
-from datetime import datetime, time, timedelta
 from django.utils import timezone
 
 from appointments.models import Appointment

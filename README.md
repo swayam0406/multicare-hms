@@ -1,4 +1,10 @@
 # Multicare HMS
+# Multicare HMS
+
+[![CI](https://github.com/swayam0406/multicare-hms/actions/workflows/ci.yml/badge.svg)](https://github.com/swayam0406/multicare-hms/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/django-5.2-092E20?logo=django)](https://www.djangoproject.com/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 A production-shaped hospital management system covering the full clinical operations lifecycle — patient registration, appointments, EMR, billing, laboratory, and pharmacy — built with Django 5.2 and PostgreSQL over 8 iterative sprints.
 
@@ -75,8 +81,7 @@ cp .env.example .env          # then edit with your DB credentials
 python manage.py migrate
 python manage.py seed_services
 python manage.py seed_lab_tests
-python manage.py seed_conditions
-python manage.py seed_medications
+python manage.py seed_catalogs
 python manage.py createsuperuser
 
 python manage.py runserver

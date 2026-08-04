@@ -165,3 +165,10 @@ desktop.ini
 # Coverage.py
 .coverage
 htmlcov/
+
+# Docker
+*.env
+.env.docker
+
+# Postgres data (if running docker locally without volumes)
+postgres_data/

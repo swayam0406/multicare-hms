@@ -17,7 +17,10 @@ from django.utils import timezone
 from appointments.models import Appointment
 from doctors.models import Department, Doctor, DoctorAvailability
 from medical_records.models import (
-    MedicalRecord, MedicationCatalog, Prescription, PrescriptionItem,
+    MedicalRecord,
+    MedicationCatalog,
+    Prescription,
+    PrescriptionItem,
 )
 from patients.models import Patient
 
