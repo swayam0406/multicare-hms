@@ -1,5 +1,8 @@
 # Multicare HMS
-# Multicare HMS
+
+**🚀 Live demo:** [multicare-hms.onrender.com](https://multicare-hms.onrender.com)
+
+Login credentials available on request. *(First load takes ~30 seconds — free tier spins down when idle.)*
 
 [![CI](https://github.com/swayam0406/multicare-hms/actions/workflows/ci.yml/badge.svg)](https://github.com/swayam0406/multicare-hms/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12-blue)](https://www.python.org/)
@@ -8,7 +11,7 @@
 
 A production-shaped hospital management system covering the full clinical operations lifecycle — patient registration, appointments, EMR, billing, laboratory, and pharmacy — built with Django 5.2 and PostgreSQL over 8 iterative sprints.
 
-**135 story points · 316 passing tests · 8 sprint commits.**
+**316 passing tests · 10 sprint commits.**
 
 ![Dashboard](docs/screenshots/02-dashboard.png)
 
@@ -133,3 +136,23 @@ Each sprint is one commit on `main`. Run `git log --oneline` to see the arc:
 ## License
 
 MIT.
+## Deployment
+
+Deployed on [Render.com](https://render.com) as a Docker container with managed PostgreSQL 16.
+
+- Continuous deployment from `main` — every merge triggers a fresh deploy
+- Zero-downtime rolling updates via Render's platform
+- Health checks at `/health/`
+- Static files served via WhiteNoise (compressed + manifest cached)
+- HSTS, secure cookies, HTTPS-only in production
+- Idempotent bootstrap command auto-provisions admin + seed data on every deploy
+
+Infrastructure defined in [`render.yaml`](render.yaml) — a full IaC blueprint declaring the web service, database, health check, and environment variables.
+
+Local containerized development uses the same Dockerfile:
+
+```bash
+docker compose up
+```
+
+See the [Dockerfile](Dockerfile) and [docker-compose.yml](docker-compose.yml) for details.
