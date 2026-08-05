@@ -303,8 +303,8 @@ class PaymentAddView(BillActionMixin):
             bill=bill,
             amount=amount,
             method=method,
-            reference=reference,
-            notes=notes,
+            reference=reference or "",
+            notes=notes or "",
             received_by=request.user,
         )
 
