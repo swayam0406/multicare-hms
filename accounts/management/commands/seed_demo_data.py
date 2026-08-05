@@ -116,9 +116,7 @@ class Command(BaseCommand):
         alice_appt, _ = Appointment.objects.get_or_create(
             patient=alice,
             doctor=doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(today, time(10, 0))
-            ),
+            scheduled_start=timezone.make_aware(datetime.combine(today, time(10, 0))),
             defaults={
                 "reason": "Persistent fever and body aches",
                 "booked_by": staff,
@@ -132,9 +130,7 @@ class Command(BaseCommand):
         Appointment.objects.get_or_create(
             patient=patients[1],
             doctor=doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(today, time(11, 0))
-            ),
+            scheduled_start=timezone.make_aware(datetime.combine(today, time(11, 0))),
             defaults={
                 "reason": "Follow-up for hypertension",
                 "booked_by": staff,
@@ -145,9 +141,7 @@ class Command(BaseCommand):
         Appointment.objects.get_or_create(
             patient=patients[2],
             doctor=doctor,
-            scheduled_start=timezone.make_aware(
-                datetime.combine(today, time(14, 0))
-            ),
+            scheduled_start=timezone.make_aware(datetime.combine(today, time(14, 0))),
             defaults={
                 "reason": "Routine checkup",
                 "booked_by": staff,
