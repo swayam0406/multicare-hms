@@ -2,10 +2,13 @@
 Curated demo data for presentations. Idempotent — safe to re-run.
 
 Creates:
-  - 5 patients with realistic names
+  - 1 user per role (7 total, plus admin from bootstrap)
+  - 5 patients with realistic names; Alice linked to a login
   - 3 appointments today (COMPLETED, IN_PROGRESS, SCHEDULED)
   - 1 completed consultation with vitals, diagnosis, prescription
   - 1 finalized bill with a partial payment
+  - Pharmacy inventory for 4 medications (one low-stock)
+  - 1 completed dispense for Alice
 """
 
 from datetime import datetime, time
@@ -33,25 +36,42 @@ class Command(BaseCommand):
             Vitals,
         )
         from patients.models import Patient
+        from pharmacy.models import Dispense, DispenseItem, InventoryItem
 
         User = get_user_model()
         self.stdout.write("Seeding demo data...")
 
-        # ---------- Staff / receptionist ----------
-        staff, _ = User.objects.get_or_create(
-            username="reception",
-            defaults={
-                "email": "reception@multicare.local",
-                "role": "RECEPTIONIST",
-                "first_name": "Priya",
-                "last_name": "Sharma",
-            },
-        )
-        staff.role = "RECEPTIONIST"
-        staff.set_password("Demo@2026")
-        staff.save()
+        # =========================================================
+        # 1. Users — one per role
+        # =========================================================
+        role_users = [
+            ("reception", "RECEPTIONIST", "Priya", "Sharma", "reception@multicare.local"),
+            ("nurse1", "NURSE", "Anita", "Nair", "nurse@multicare.local"),
+            ("labtech1", "LAB_TECH", "Sanjay", "Patel", "labtech@multicare.local"),
+            ("pharma1", "PHARMACIST", "Ravi", "Kumar", "pharma@multicare.local"),
+        ]
+        for username, role, first, last, email in role_users:
+            u, _ = User.objects.get_or_create(
+                username=username,
+                defaults={
+                    "email": email,
+                    "role": role,
+                    "first_name": first,
+                    "last_name": last,
+                },
+            )
+            u.role = role
+            u.first_name = first
+            u.last_name = last
+            u.email = email
+            u.set_password("Demo@2026")
+            u.save()
 
-        # ---------- Doctor ----------
+        staff = User.objects.get(username="reception")
+
+        # =========================================================
+        # 2. Doctor
+        # =========================================================
         doc_user, _ = User.objects.get_or_create(
             username="dr_sharma",
             defaults={
@@ -62,6 +82,8 @@ class Command(BaseCommand):
             },
         )
         doc_user.role = "DOCTOR"
+        doc_user.first_name = "Rajesh"
+        doc_user.last_name = "Sharma"
         doc_user.set_password("Demo@2026")
         doc_user.save()
 
@@ -86,7 +108,9 @@ class Command(BaseCommand):
                 defaults={"start_time": time(9, 0), "end_time": time(17, 0)},
             )
 
-        # ---------- Patients ----------
+        # =========================================================
+        # 3. Patients
+        # =========================================================
         patients_data = [
             ("Alice", "Anderson", "F", "1990-04-15", "9876543210"),
             ("Bhavesh", "Bansal", "M", "1985-07-22", "9876543211"),
@@ -110,7 +134,25 @@ class Command(BaseCommand):
 
         alice = patients[0]
 
-        # ---------- Today's appointments ----------
+        # Give Alice a login
+        alice_user, _ = User.objects.get_or_create(
+            username="alice",
+            defaults={
+                "email": "alice@example.com",
+                "role": "PATIENT",
+                "first_name": "Alice",
+                "last_name": "Anderson",
+            },
+        )
+        alice_user.role = "PATIENT"
+        alice_user.set_password("Demo@2026")
+        alice_user.save()
+        alice.user = alice_user
+        alice.save()
+
+        # =========================================================
+        # 4. Today's appointments
+        # =========================================================
         today = timezone.localdate()
 
         alice_appt, _ = Appointment.objects.get_or_create(
@@ -149,7 +191,9 @@ class Command(BaseCommand):
             },
         )
 
-        # ---------- Alice's medical record ----------
+        # =========================================================
+        # 5. Alice's medical record
+        # =========================================================
         mr, _ = MedicalRecord.objects.get_or_create(
             appointment=alice_appt,
             defaults={
@@ -177,7 +221,6 @@ class Command(BaseCommand):
             },
         )
 
-        # Diagnosis (skip silently if no matching condition seeded)
         cond = ConditionCatalog.objects.filter(name__icontains="viral").first()
         if cond:
             Diagnosis.objects.get_or_create(
@@ -186,7 +229,6 @@ class Command(BaseCommand):
                 defaults={"is_primary": True},
             )
 
-        # Prescription
         rx, _ = Prescription.objects.get_or_create(
             medical_record=mr,
             defaults={
@@ -207,21 +249,16 @@ class Command(BaseCommand):
                 },
             )
 
-        # ---------- Alice's bill ----------
+        # =========================================================
+        # 6. Alice's bill + partial payment
+        # =========================================================
         try:
             bill = alice_appt.bill
         except Bill.DoesNotExist:
-            bill = Bill.objects.create(
-                appointment=alice_appt,
-                patient=alice,
-            )
+            bill = Bill.objects.create(appointment=alice_appt, patient=alice)
             cons_svc = ServiceCatalog.objects.filter(category="CONSULTATION").first()
             if cons_svc:
-                BillItem.objects.create(
-                    bill=bill,
-                    service=cons_svc,
-                    quantity=1,
-                )
+                BillItem.objects.create(bill=bill, service=cons_svc, quantity=1)
 
         bill.refresh_from_db()
         if bill.status == "DRAFT":
@@ -235,10 +272,78 @@ class Command(BaseCommand):
                 received_by=staff,
             )
 
+        # =========================================================
+        # 7. Pharmacy inventory
+        # =========================================================
+        inventory_setup = [
+            ("paracetamol", 250, 50, Decimal("2.00"), Decimal("5.00")),
+            ("amoxicillin", 180, 40, Decimal("8.00"), Decimal("15.00")),
+            ("ibuprofen", 30, 40, Decimal("3.00"), Decimal("7.00")),  # LOW STOCK
+            ("cetirizine", 400, 50, Decimal("1.50"), Decimal("4.00")),
+        ]
+        for name_frag, qty, reorder, cost, sale in inventory_setup:
+            m = MedicationCatalog.objects.filter(name__icontains=name_frag).first()
+            if not m:
+                continue
+            InventoryItem.objects.update_or_create(
+                medication=m,
+                defaults={
+                    "quantity_on_hand": qty,
+                    "reorder_threshold": reorder,
+                    "unit_cost": cost,
+                    "unit_sale_price": sale,
+                    "last_restocked_at": timezone.now(),
+                },
+            )
+
+        # =========================================================
+        # 8. One completed dispense for Alice
+        # =========================================================
+        rx_item = PrescriptionItem.objects.filter(
+            prescription=rx,
+            medication__name__icontains="paracetamol",
+        ).first()
+
+        if rx_item:
+            paracetamol_inv = InventoryItem.objects.filter(
+                medication=rx_item.medication,
+            ).first()
+            if paracetamol_inv and paracetamol_inv.quantity_on_hand >= 15:
+                pharma_user = User.objects.get(username="pharma1")
+
+                dispense, created = Dispense.objects.get_or_create(
+                    prescription=rx,
+                    defaults={
+                        "patient": alice,
+                        "dispensed_by": pharma_user,
+                        "status": "PENDING",
+                    },
+                )
+                if created:
+                    DispenseItem.objects.create(
+                        dispense=dispense,
+                        prescription_item=rx_item,
+                        inventory_item=paracetamol_inv,
+                        quantity_dispensed=15,
+                        unit_price=paracetamol_inv.unit_sale_price,
+                    )
+                    try:
+                        dispense.status = "DISPENSED"
+                        dispense.dispensed_at = timezone.now()
+                        dispense.save()
+                    except Exception as exc:
+                        self.stdout.write(
+                            self.style.WARNING(f"  Dispense state transition skipped: {exc}")
+                        )
+
+        # =========================================================
+        # Done
+        # =========================================================
         self.stdout.write(
             self.style.SUCCESS(
                 f"Demo data seeded: {Patient.objects.count()} patients, "
                 f"{Appointment.objects.count()} appointments, "
-                f"{Bill.objects.count()} bills."
+                f"{Bill.objects.count()} bills, "
+                f"{User.objects.count()} users."
             )
         )
